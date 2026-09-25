@@ -279,9 +279,42 @@ Vorlagen liegen in `deploy/`; sie werden nicht automatisch auf dem System instal
 3. `/etc/schulleitungsjournal` als root mit Gruppe journal und Modus 0750 anlegen. `deploy/journal.env.example` als `journal.env` ablegen, Modus 0640. Den Datenbankschlüssel vor dem ersten Start erzeugen: beispielsweise mit `Fernet.generate_key()`, als `master.key` dort ablegen, Eigentümer root:journal, Modus 0640. Bei Übernahme einer bestehenden Instanz unbedingt deren Originalschlüssel verwenden.
 4. Als Benutzer journal mit den Variablen aus `journal.env` `manage.py init` ausführen. Auch manuelle Verwaltungsbefehle müssen dieselben Instanz-/Schlüsselvariablen verwenden.
 5. Die fünf Service-/Timerdateien aus `deploy/` nach `/etc/systemd/system/` kopieren, `systemctl daemon-reload`, anschließend `systemctl enable --now journal.service journal-sync.timer journal-maintenance.timer`.
-6. nginx-Vorlage an Domain, Zertifikat und tatsächlichen VPN-Adressbereich anpassen; mittels `nginx -t` prüfen, dann aktivieren. Die Beispielkonfiguration verweigert alle anderen Adressen. Port 8088 bleibt an localhost gebunden.
+6. nginx-Vorlage an Domain, Zertifikat und tatsächlichen VPN-Adressbereich anpassen; mittels `nginx -t` prüfen, dann aktivieren. Die Beispielkonfiguration verweigert alle anderen Adressen. Port 8088 bleibt an localhost gebunden — läuft nginx auf einem anderen Rechner, gilt stattdessen der folgende Abschnitt.
 7. Einrichtung über HTTPS abschließen. Timerstatus und erste Sicherung prüfen: `systemctl list-timers 'journal-*'`, `journalctl -u journal-sync.service`, `journalctl -u journal-maintenance.service`.
 8. Wiederherstellung auf einem separaten Testpfad erproben und verschlüsselte Sicherungen auf ein separates Ziel übernehmen.
+
+### nginx auf einem anderen Rechner
+
+Steht der Reverse Proxy nicht auf dem Anwendungsserver — etwa weil dieser in einem eigenen LXC-Container liegt und nginx den Netzzugang für mehrere Dienste regelt —, sind drei Stellen anzupassen. Die Vorlage dafür ist `deploy/journal-remote-proxy.conf`; sie kommt als Drop-in neben `journal.service`, damit ein späteres `git pull` die Anpassung nicht überschreibt:
+
+```bash
+mkdir -p /etc/systemd/system/journal.service.d
+cp deploy/journal-remote-proxy.conf /etc/systemd/system/journal.service.d/override.conf
+# beide Adressen darin eintragen, dann:
+systemctl daemon-reload && systemctl restart journal.service
+```
+
+1. **`--listen`** bekommt die feste Adresse des Anwendungsservers statt `127.0.0.1`. Der Rechner braucht dafür eine feste IP; bei wechselnder Adresse startet der Dienst nicht mehr.
+2. **`--trusted-proxy`** bekommt die Adresse des nginx-Rechners statt `127.0.0.1`. **Ohne diese Angabe verwirft waitress die Weiterleitungs-Header, die Anwendung sieht eine unverschlüsselte Verbindung und antwortet auf jeder Seite mit „HTTPS ist erforderlich" (400).** Wenn nach der Umstellung nichts mehr geht, liegt es fast immer hier und nicht an nginx.
+3. **`proxy_pass`** in `deploy/nginx.conf` zeigt auf den Anwendungsserver. `proxy_set_header X-Forwarded-Proto https` muss gesetzt bleiben — fehlt es, erscheint dieselbe 400-Meldung. Die `allow`/`deny`-Regeln betreffen weiterhin die Clients und bleiben unverändert.
+
+`JOURNAL_TRUST_PROXY=1` bleibt in der `journal.env` stehen.
+
+Port 8088 spricht Klartext-HTTP und kennt keine eigene Zugangskontrolle: Wer ihn erreicht, spricht unmittelbar mit der Anwendung. Bisher lag er auf localhost, jetzt im Netz. Er gehört deshalb per Firewall auf die Adresse des nginx-Rechners beschränkt — in Proxmox über die Firewall am Container (zuverlässiger als `ufw` in einem unprivilegierten LXC): Input-Policy `DROP`, dazu `ACCEPT tcp/8088` von der nginx-Adresse und `ACCEPT tcp/22` von der Verwaltungsadresse.
+
+Die Strecke zwischen nginx und Anwendungsserver läuft unverschlüsselt. Das ist vertretbar, solange dieses Netzsegment ausschließlich eigene Geräte umfasst; es ist aber ein Unterschied zum Betrieb auf einem einzelnen Rechner, bei dem die Daten das Gerät nie verlassen.
+
+Prüfen lässt sich die Kette von der nginx-Maschine aus:
+
+```bash
+curl -I http://APP-ADRESSE:8088/
+# 400 „HTTPS ist erforderlich" – an dieser Stelle richtig
+curl -I -H 'X-Forwarded-Proto: https' -H 'X-Forwarded-Host: journal.schule.example' \
+     http://APP-ADRESSE:8088/
+# 302 zur Anmeldung – die Vertrauenskette steht
+```
+
+Bleibt es beim zweiten Aufruf bei 400, greift `--trusted-proxy` nicht; `journalctl -u journal.service` zeigt, mit welcher Quelladresse die Anfragen tatsächlich ankommen.
 
 `JOURNAL_TRUST_PROXY=1` ist nur für den Betrieb hinter dem lokalen nginx vorgesehen. nginx ersetzt Forwarded-Header. Direkte externe Zugriffe auf den WSGI-Port sind nicht vorgesehen. Anmeldung benötigt HTTPS, starkes Passwort und TOTP. Cookies sind Secure/HttpOnly/SameSite=Strict, Formulare verwenden CSRF-Tokens, Fehlversuche werden serverseitig begrenzt. nginx-Zugriffslogs sind deaktiviert, damit Suchbegriffe nicht im Access-Log landen.
 
