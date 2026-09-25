@@ -28,7 +28,7 @@
     const anzeigen=eingeklappt=>{
       document.body.classList.toggle('sidebar-collapsed',eingeklappt);
       sidebarToggle.setAttribute('aria-expanded',String(!eingeklappt));
-      sidebarToggle.querySelector('.nav-label').textContent=
+      sidebarToggle.querySelector('span').textContent=
         eingeklappt?'Seitenleiste ausklappen':'Seitenleiste einklappen';
       // Eingeklappt bleibt nur das Symbol übrig; der Titel nennt das Ziel beim
       // Zeigen. Ausgeklappt steht die Beschriftung daneben und der Titel stört.
