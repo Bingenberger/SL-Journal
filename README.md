@@ -280,7 +280,12 @@ Dies ersetzt die Anmeldung über einen neuen Einrichtungscode; Inhalte bleiben e
 
 Vorlagen liegen in `deploy/`; sie werden nicht automatisch auf dem System installiert. Betrieb und Netzfreigabe entsprechend der im Lastenheft offenen Entscheidung mit der zuständigen Stelle festlegen.
 
-1. Eigenen Systembenutzer `journal` anlegen. Anwendung nach `/opt/schulleitungsjournal` kopieren, virtuelle Umgebung dort erstellen und `requirements.txt` installieren. Codeverzeichnis möglichst nur für den Administrator schreibbar.
+1. Eigenen Systembenutzer `journal` anlegen — dessen Heimatverzeichnis **nicht** auf das Codeverzeichnis legen, sonst gehört dieses teils `journal`, teils root, und `git pull` verweigert später mit „dubious ownership". Anwendung nach `/opt/schulleitungsjournal` kopieren oder klonen, virtuelle Umgebung dort erstellen und `requirements.txt` installieren. Danach gehört das Codeverzeichnis root und ist für die Gruppe `journal` nur lesbar:
+
+   ```bash
+   chown -R root:journal /opt/schulleitungsjournal
+   chmod -R u=rwX,g=rX,o= /opt/schulleitungsjournal
+   ```
 2. `/var/lib/schulleitungsjournal` und `/var/backups/schulleitungsjournal` für den Benutzer `journal` mit Modus 0700 anlegen.
 3. `/etc/schulleitungsjournal` als root mit Gruppe journal und Modus 0750 anlegen. `deploy/journal.env.example` als `journal.env` ablegen, Modus 0640. Den Datenbankschlüssel vor dem ersten Start erzeugen: beispielsweise mit `Fernet.generate_key()`, als `master.key` dort ablegen, Eigentümer root:journal, Modus 0640. Bei Übernahme einer bestehenden Instanz unbedingt deren Originalschlüssel verwenden.
 4. Als Benutzer journal mit den Variablen aus `journal.env` `manage.py init` ausführen. Auch manuelle Verwaltungsbefehle müssen dieselben Instanz-/Schlüsselvariablen verwenden.
