@@ -1,0 +1,11 @@
+[Unit]
+Description=Lokales Schulleitungsjournal (HTTPS)
+
+[Service]
+WorkingDirectory=%h/SL-Journal
+ExecStart=%h/SL-Journal/.venv/bin/python manage.py run
+Restart=on-failure
+UMask=0077
+
+[Install]
+WantedBy=default.target

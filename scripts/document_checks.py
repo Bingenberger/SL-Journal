@@ -1,0 +1,71 @@
+from playwright.sync_api import expect
+from journal.db import get_db,one
+
+
+def check_documents(page,app,output):
+    origin=page.url.split('/')[0]+'//'+page.url.split('/')[2]
+    with app.app_context():
+        db=get_db()
+        eid=db.execute("INSERT INTO entries(date,type,title) VALUES('2026-09-22','meeting','Dokumentverknüpfung prüfen')").lastrowid
+        db.execute('INSERT INTO entry_projects VALUES(?,1)',(eid,))
+        db.commit()
+    external=[]
+    page.on('request',lambda request: external.append(request.url) if 'cloud.example.org' in request.url else None)
+    page.goto(origin+f'/entry/{eid}')
+    page.get_by_role('button',name='Nextcloud-Dokument verknüpfen',exact=True).click()
+    dialog=page.locator('#document-dialog')
+    dialog.get_by_label('Nextcloud-Link',exact=True).fill('https://cloud.example.org/f/123')
+    dialog.get_by_label('Anzeigename',exact=True).fill('Raumplan Browserdatei')
+    dialog.locator('[data-md-content=description]').fill('Besprechungsräume im Erdgeschoss')
+    dialog.get_by_role('button',name='Dokumentverweis speichern',exact=True).click()
+    expect(dialog).not_to_be_visible()
+    with app.app_context(): did=one("SELECT id FROM documents WHERE name='Raumplan Browserdatei'")['id']
+    card=page.locator(f'[data-document-id="{did}"]')
+    expect(card).to_contain_text('Raumplan Browserdatei')
+    expect(card.get_by_role('link',name='In Nextcloud öffnen',exact=True)).to_have_attribute('href','https://cloud.example.org/f/123')
+    assert not external
+    page.goto(origin+'/project/1')
+    expect(card).to_contain_text('Aus zugeordneten Einträgen')
+    page.get_by_role('button',name='Nextcloud-Dokument verknüpfen',exact=True).click()
+    dialog.get_by_label('Nextcloud-Link',exact=True).fill('https://cloud.example.org/f/123')
+    dialog.get_by_label('Anzeigename',exact=True).fill('Keine Dublette')
+    dialog.get_by_role('button',name='Dokumentverweis speichern',exact=True).click()
+    expect(dialog).not_to_be_visible()
+    expect(page.locator('[data-document-id]')).to_have_count(1)
+    card.get_by_role('button',name='Bearbeiten',exact=True).click()
+    expect(dialog.get_by_label('Anzeigename',exact=True)).to_have_value('Raumplan Browserdatei')
+    dialog.locator('[data-md-content=description]').fill('Aktualisierte Beschreibung')
+    dialog.get_by_role('button',name='Dokumentverweis speichern',exact=True).click()
+    expect(dialog).not_to_be_visible()
+    expect(card).to_contain_text('Aktualisierte Beschreibung')
+    card.get_by_role('button',name='Verknüpfung entfernen',exact=True).click()
+    expect(card).to_contain_text('Aus zugeordneten Einträgen')
+    page.goto(origin+f'/entry/{eid}')
+    page.get_by_role('button',name='Eintrag bearbeiten',exact=True).click()
+    editor=page.locator('#entry-dialog')
+    expect(editor).to_be_visible()
+    body=editor.locator('[data-md-content=body]')
+    body.click()
+    body.press_sequentially('Siehe @Raumplan Browserdatei',delay=3)
+    option=page.locator('.resource-completions [role=option]').filter(has_text='Raumplan Browserdatei')
+    expect(option).to_be_visible()
+    expect(option).to_contain_text('Nextcloud-Dokument')
+    option.click()
+    expect(editor.locator('[name=body]')).to_have_value(f'Siehe [Raumplan Browserdatei](/document/{did}) ')
+    editor.get_by_role('button',name='Eintrag speichern',exact=True).click()
+    expect(editor).not_to_be_visible()
+    page.locator('#entry-body').get_by_role('link',name='Raumplan Browserdatei',exact=True).click()
+    expect(page.get_by_role('heading',name='Raumplan Browserdatei',exact=True)).to_be_visible()
+    expect(page.get_by_role('link',name='In Nextcloud öffnen',exact=True)).to_have_attribute('target','_blank')
+    assert not external
+    page.set_viewport_size({'width':390,'height':844})
+    page.goto(origin+f'/entry/{eid}')
+    assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
+    page.screenshot(path=str(output/'nextcloud-documents-mobile.png'),full_page=True)
+    card.get_by_role('button',name='Verknüpfung entfernen',exact=True).click()
+    expect(card).not_to_be_visible()
+    page.locator('#entry-body').get_by_role('link',name='Raumplan Browserdatei',exact=True).click()
+    expect(page.get_by_role('heading',name='Raumplan Browserdatei',exact=True)).to_be_visible()
+    assert not external
+    page.set_viewport_size({'width':1440,'height':1100})
+    page.goto(origin+'/')

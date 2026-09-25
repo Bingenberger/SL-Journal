@@ -1,0 +1,9 @@
+
+{% extends 'base.html' %}
+{% from 'macros.html' import empty with context %}
+{% block breadcrumb %}Tags{% endblock %}
+{% block content %}
+<div class="page-heading"><div><div class="eyebrow">THEMEN WIEDERFINDEN</div><h1>Tags</h1><p class="subtitle">Alle verwendeten Tags mit den zugehörigen Mails, Notizen und Gesprächen.</p></div><span class="pill">{{ tags|length }} Tags</span></div>
+<form class="filter-bar" method="get"><input name="q" data-search-scope="tags" aria-label="Tags durchsuchen" placeholder="Tag suchen …" value="{{ request.args.get('q','') }}"><button class="button">{{ icon('search') }} Suchen</button>{% if request.args.get('q') %}<a class="text-button" href="{{ url_for('tag_list') }}">Suche zurücksetzen</a>{% endif %}</form>
+<div class="card-grid">{% for tag in tags %}<a class="panel padded tag-card" href="{{ url_for('entry_list',tag=tag.name) }}"><h2>{{ icon('tags') }} <span>#{{ tag.name }}</span></h2><p class="muted">{{ tag.count }} {{ 'Eintrag' if tag.count==1 else 'Einträge' }}</p><span class="text-button">Inhalte ansehen {{ icon('forward') }}</span></a>{% else %}{{ empty('Keine Tags gefunden','Vergeben Sie Tags beim Bearbeiten eines Eintrags.' if not request.args.get('q') else 'Versuchen Sie einen anderen Suchbegriff.','tags') }}{% endfor %}</div>
+{% endblock %}

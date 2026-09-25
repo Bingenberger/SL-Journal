@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block breadcrumb %}Suche{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Journal durchsuchen</h1><p class="subtitle">Einträge, Aufgaben, Projekte, Vorgänge, Kontakte, Tags und Dokumentverweise.</p></div><span class="pill">{{ total }} Treffer</span></div>
+<form class="filter-bar" method="get" action="{{ url_for('global_search') }}"><input name="q" data-search-scope="all" value="{{ query }}" aria-label="Suchbegriff" placeholder="Suchbegriff eingeben …" maxlength="200"><button class="button primary">{{ icon('search') }} Suchen</button></form>
+{% if query %}<p class="small muted">Ergebnisse für „{{ query }}“ · Groß- und Kleinschreibung wird nicht unterschieden.</p>{% endif %}
+<div class="panel search-results">{% for item in items %}<a class="search-result" href="{{ item.url }}"><span class="pill">{{ item.kind }}</span><strong>{{ item.label }}</strong>{% if item.detail %}<span class="small muted">{{ item.detail }}</span>{% endif %}</a>{% else %}<div class="empty">{{ 'Keine passenden Inhalte gefunden.' if query else 'Geben Sie einen Suchbegriff ein.' }}</div>{% endfor %}</div>
+{% if page>1 or more %}<div class="pagination">{% if page>1 %}<a class="button" href="{{ url_for('global_search',q=query,page=page-1) }}">Zurück</a>{% endif %}<span>Seite {{ page }}</span>{% if more %}<a class="button" href="{{ url_for('global_search',q=query,page=page+1) }}">Weiter</a>{% endif %}</div>{% endif %}
+{% endblock %}

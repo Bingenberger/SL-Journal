@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="{{ csrf_token }}"><title>Handschrift · Schulleitungsjournal</title><link rel="stylesheet" href="{{ url_for('static',filename='handwriting.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='excalidraw/handwriting.css') }}"><script type="module" src="{{ url_for('static',filename='excalidraw/handwriting.js') }}"></script></head>
+<body class="handwriting-page">
+{% include 'icons.html' %}<header class="handwriting-header"><a id="sheet-back" href="{{ boot.back }}">Zum {{ 'Eintrag' if entry else 'Journal' }}</a><label>Blatttitel<input id="sheet-title" maxlength="500" required value="{{ boot.title }}"></label><label id="sheet-date-label" {{ 'hidden' if entry }}>Datum<input id="sheet-date" type="date" value="{{ boot.date }}" required></label><button id="sheet-save" type="button" disabled>{{ icon('check') }} Jetzt speichern</button><button id="sheet-download" type="button" disabled>{{ icon('download') }} Zeichnung herunterladen</button></header>
+<div class="handwriting-info"><span id="sheet-status" role="status" aria-live="polite">Zeichenblatt wird geladen …</span><span>Automatische Speicherung · Stift, Maus oder Touch · weitere Blätter am Eintrag</span></div>
+<div id="drawing-root" aria-label="Zeichenblatt"></div><noscript>Zum handschriftlichen Schreiben muss JavaScript aktiviert sein.</noscript>
+<script type="application/json" id="sheet-data">{{ boot|tojson }}</script></body></html>

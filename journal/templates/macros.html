@@ -1,0 +1,69 @@
+{% macro entry_chips(e, files=true) %}
+{%- set count = e.attachments|length if files else 0 -%}
+{%- if e.cases or e.projects or e.tags or count or e.case_items or e.project_items %}<div class="chips">
+{%- for c in e.cases %}<a class="pill pill-case" href="{{ url_for('case_view',cid=c.id) }}">{{ icon('cases') }}{{ c.title }}</a>{% endfor -%}
+{%- for c in e.case_items if c.kind=='new_case' %}<a class="pill warning" href="{{ url_for('case_list') }}">{{ icon('cases') }}{{ c.label }} · Vorschlag</a>{% endfor -%}
+{%- for p in e.projects %}<a class="pill pill-project" href="{{ url_for('project_view',pid=p.id) }}">{{ icon('projects') }}{{ p.name }}</a>{% endfor -%}
+{%- for p in e.project_items if p.kind=='new_project' %}<a class="pill warning" href="{{ url_for('projects') }}">{{ icon('projects') }}{{ p.label }} · Vorschlag</a>{% endfor -%}
+{%- for tag in e.tags.split(', ') if tag %}<a class="pill pill-tag" href="{{ url_for('entry_list',tag=tag) }}">{{ icon('tags') }}{{ tag }}</a>{% endfor -%}
+{%- if count %}<span class="pill pill-file">{{ icon('attachment') }}{{ count }} {{ 'Anhang' if count==1 else 'Anhänge' }}</span>{% endif -%}
+</div>{% endif -%}
+{% endmacro %}
+{% macro entry_actions(e) %}
+<div class="entry-actions"><button class="mini-button" data-new-task data-entry-id="{{ e.id }}" data-case-id="{{ e.cases[0].id if e.cases else '' }}" data-project-id="{{ e.projects[0].id if e.projects else '' }}">{{ icon('plus') }} Aufgabe</button><button class="mini-button" data-attach-note data-resource-url="{{ url_for('entry_view',eid=e.id) }}" data-source-label="{{ e.title }}">{{ icon('newentry') }} An Notiz anhängen</button></div>
+{% endmacro %}
+{% macro mail_preview(e) %}
+{% set teaser = (e.body or '')|md|striptags|trim %}
+{% if teaser %}<p class="mail-preview">{{ teaser|truncate(240, false, ' …', 0) }}</p>{% endif %}
+{% endmacro %}
+{% macro mail_card(e) %}
+{% set outgoing = e.type=='mail_out' %}
+{% set people = (e.recipients if outgoing else e.sender)|mail_names %}
+<article class="mail-card {{ 'outgoing' if outgoing else 'incoming' }}">
+<div class="mail-top">{{ icon('mailout' if outgoing else 'mailin','mail-direction') }}<span class="sr-only">{{ 'Gesendet an' if outgoing else 'Eingegangen von' }}</span><h3><a href="{{ url_for('entry_view',eid=e.id) }}">{{ e.title }}</a></h3>{% if e.time %}<span class="mail-time">{{ e.time }}</span>{% endif %}</div>
+<p class="entry-person">{{ icon('person') }}<span>{{ people or 'Beteiligte bitte ergänzen' }}</span>{% if e.needs_review %}<a class="pill warning" href="{{ url_for('entry_view',eid=e.id) }}">Angaben prüfen</a>{% endif %}</p>
+{{ mail_preview(e) }}
+{{ entry_chips(e) }}
+{{ entry_actions(e) }}
+</article>
+{% endmacro %}
+{% macro entry_card(e) %}
+{% set automatic_journal_title = e.type=='journal' and e.title == 'Journal · ' ~ (e.date|de_date) %}
+<article class="entry-card"><div class="entry-meta" {% if automatic_journal_title and not e.time and not e.needs_review %}hidden{% endif %}>{% if not automatic_journal_title %}<span class="type-label type-{{ e.type }}">{{ types[e.type] }}{% if e.drawings %} · Handschrift{% endif %}</span><span>{{ e.date|de_date }}{% if e.time %} · {{ e.time }}{% endif %}</span>{% elif e.time %}<span>{{ e.time }}</span>{% endif %}{% if e.needs_review %}<span class="pill warning">Angaben prüfen</span>{% endif %}</div><h3><a href="{{ url_for('entry_view',eid=e.id) }}">{{ e.title }}</a></h3>{% set beteiligte = (e.participants or e.sender)|mail_names(3) %}{% if beteiligte %}<p class="entry-person">{{ icon('person') }}<span>{{ beteiligte }}</span></p>{% endif %}{% if e.type in ['mail_in','mail_out'] %}{{ mail_preview(e) }}{% else %}<div class="excerpt">{{ (e.body or (e.agenda if e.type=='protocol' else '') or (e.decisions if e.type=='protocol' else ''))[:220]|md }}{{ ' …' if e.body|length > 220 }}</div>{% endif %}{% for a in e.attachments if a.mime in ['audio/webm','audio/ogg','audio/mp4'] %}<audio class="voice-player" controls preload="none" src="{{ url_for('attachment_audio',aid=a.id) }}" aria-label="{{ a.name }}"></audio>{% endfor %}{{ entry_chips(e) }}{{ entry_actions(e) }}</article>
+{% endmacro %}
+{% macro task_row(t) %}{% set task_case=case_by_id(t.case_id) %}{% set project_items=task_project_items(t.id) %}{% set family=task_family(t.id) %}{% set series=task_series(t.id) %}{% set meeting=task_meeting(t.id) %}{% set edit_data=dict(t,series=series,case_items=task_case_items(t.id),project_items=project_items,parent_text=family.parent.text if family.parent else '') %}
+<div class="task-row {{ 'completed' if t.done }} {{ 'is-subtask' if t.parent_id }}" id="task-{{ t.id }}"><form action="{{ url_for('task_toggle',tid=t.id) }}" method="post" data-async><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="task-check {{ 'checked' if t.done }}" aria-label="{{ 'Wieder öffnen' if t.done else 'Erledigen' }}: {{ t.text }}">{% if t.done %}{{ icon('check') }}{% endif %}</button></form><div class="task-content"><button class="task-text" data-edit-task='{{ edit_data|tojson }}'>{{ t.text }}</button><div class="task-meta">{% if meeting %}<a class="series-badge" href="{{ url_for('appointment_view',aid=meeting.id) }}">{{ icon('calendar') }} {{ meeting.title }} · {{ meeting.date|de_date }}{{ ' · Kalendertermin prüfen' if meeting.state=='missing' }}</a>{% if meeting.attachment_id %}<a href="{{ url_for('attachment',aid=meeting.attachment_id) }}">{{ icon('attachment') }} {{ meeting.resource_label }}</a>{% elif meeting.document_id %}<a href="{{ url_for('document_view',did=meeting.document_id) }}">{{ icon('attachment') }} {{ meeting.resource_label }}</a>{% elif meeting.resource_label %}<span class="muted">Unterlage nicht mehr vorhanden: {{ meeting.resource_label }}</span>{% endif %}{% endif %}{% if series %}<a class="series-badge" href="{{ url_for('task_series_view',sid=series.id) }}">{{ icon('processes') }} {{ recurrence_frequencies[series.frequency] }}{{ ' · pausiert' if not series.active }}</a>{% endif %}{% if family.parent %}<a href="{{ url_for('task_list',filter='all',focus_task=family.parent.id) }}#task-{{ family.parent.id }}">{{ icon('subtask') }} {{ family.parent.text }}</a>{% endif %}{% for p in project_items if p.kind=='new_project' %}<a href="{{ url_for('projects') }}">{{ icon('projects') }} {{ p.label }} · Vorschlag</a>{% endfor %}{% for c in task_case_items(t.id) if c.kind=='new_case' %}<a href="{{ url_for('case_list') }}">{{ icon('cases') }} {{ c.label }} · Vorschlag</a>{% endfor %}{% if task_case %}<a href="{{ url_for('case_view',cid=task_case.id) }}">{{ icon('cases') }} {{ task_case.title }}</a>{% endif %}{% if t.project_name %}<a href="{{ url_for('project_view',pid=t.project_id) }}">{{ icon('projects') }} {{ t.project_name }}</a>{% endif %}{% if t.entry_id %}<a href="{{ url_for('entry_view',eid=t.entry_id) }}">Zum Eintrag {{ icon('external') }}</a>{% endif %}{% if t.done %}<span>Erledigt {{ t.completed_at|de_date }}</span>{% elif t.due %}<span class="{{ 'overdue' if t.due < today }}">{% if t.due < today %}Überfällig · {% endif %}{{ t.due|de_date }}</span>{% else %}<span>Ohne Datum</span>{% endif %}</div>{% if family.children %}<details class="subtask-list"><summary>{{ family.completed }}/{{ family.children|length }} Unteraufgaben erledigt</summary>{% for child in family.children %}<a href="{{ url_for('task_list',filter='all',focus_task=child.id) }}#task-{{ child.id }}">{{ icon('check' if child.done else 'empty') }} {{ child.text }}{% if child.due %} · {{ child.due|de_date }}{% endif %}</a>{% endfor %}</details>{% endif %}<details class="task-actions"><summary aria-label="Weitere Aktionen für {{ t.text }}">{{ icon('more') }}</summary><div class="task-menu">{% if not t.parent_id %}<button class="text-button small" data-new-subtask='{{ edit_data|tojson }}'>{{ icon('plus') }} Unteraufgabe</button>{% endif %}<form method="post" action="{{ url_for('task_delete',tid=t.id) }}" data-async data-confirm="{{ 'Diese Aufgabe und ihre Unteraufgaben endgültig löschen?' if family.children else 'Diese Aufgabe endgültig löschen?' }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="text-button small danger">{{ icon('delete') }} Aufgabe löschen</button></form></div></details></div></div>
+{% endmacro %}
+{% macro empty(title,text='',symbol='empty') %}<div class="empty">{{ icon(symbol,'empty-icon') }}<strong>{{ title }}</strong>{% if text %}<p>{{ text }}</p>{% endif %}</div>{% endmacro %}
+
+{% macro documents_section(owner,owner_id) %}
+{% set documents=listed_documents(owner,owner_id) %}
+<section class="panel document-panel {{ 'compact-document' if not documents }}">
+{% if documents %}<div class="panel-heading"><h2>Nextcloud-Dokumente <span class="number">{{ documents|length }}</span></h2></div>{% endif %}
+<div class="document-add"><button class="button small" data-new-document data-owner="{{ owner }}" data-owner-id="{{ owner_id }}">{{ icon('plus') }} Nextcloud-Dokument verknüpfen</button></div>
+{% for d in documents %}
+{% set zeigbar=document_preview(d.url) %}
+<article class="document-card" data-document-id="{{ d.id }}"{% if zeigbar %} data-pdf-url="{{ url_for('document_page',did=d.id,page=1) }}" data-pdf-name="{{ d.name }}" data-pdf-download="{{ url_for('document_file',did=d.id) }}" data-pdf-more="{{ url_for('document_view',did=d.id) }}"{% endif %}>
+<h3><a href="{{ url_for('document_view',did=d.id) }}">{{ d.name }}</a></h3>
+{% if d.description %}<p class="small wrap">{{ d.description }}</p>{% endif %}
+<div class="document-buttons">{% if zeigbar %}<button type="button" class="button small pdf-preview-button" aria-label="Vorschau: {{ d.name }}" aria-haspopup="dialog" aria-expanded="false" aria-controls="pdf-preview">{{ icon('eye') }} Vorschau</button>{% endif %}<a class="button small" href="{{ d.url }}" target="_blank" rel="noopener noreferrer">In Nextcloud öffnen {{ icon('external') }}</a></div>
+<div class="document-actions"><button class="text-button" data-plan-meeting data-meeting-document-id="{{ d.id }}" {% if owner=='entry' %}data-source-entry-id="{{ owner_id }}"{% endif %} data-source-label="{{ d.name }}" data-text="{{ d.name }} besprechen">{{ icon('calendar') }} Für Termin vormerken</button><button class="text-button" data-edit-document='{{ d|tojson }}'>{{ icon('edit') }} Bearbeiten</button>
+{% if d.direct %}<form action="{{ url_for('document_detach',did=d.id) }}" method="post" data-async><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="owner" value="{{ owner }}"><input type="hidden" name="owner_id" value="{{ owner_id }}"><button class="text-button">{{ icon('close') }} Verknüpfung entfernen</button></form>{% else %}<span class="small muted">Aus zugeordneten Einträgen</span>{% endif %}</div>
+{% if d.origins %}<div class="suggestion-entries">{% for e in d.origins %}<a href="{{ url_for('entry_view',eid=e.id) }}">{{ e.title }}</a>{% endfor %}</div>{% endif %}
+</article>
+{% endfor %}
+</section>
+{% endmacro %}
+
+{% macro attachment_row(a) %}
+{% set pdf=a.mime=='application/pdf' or a.name.lower().endswith('.pdf') %}
+<div class="attachment-row" {% if pdf %}data-pdf-url="{{ url_for('attachment_preview',aid=a.id) }}" data-pdf-name="{{ a.name }}" data-pdf-download="{{ url_for('attachment',aid=a.id) }}"{% endif %}>
+<a class="attachment" href="{{ url_for('attachment',aid=a.id) }}">{{ icon('download') }}<div>{{ a.name }}<small>{{ (a.size/1024)|round(1) }} KB</small></div></a>
+<button type="button" class="text-button meeting-attachment-action" data-plan-meeting data-attachment-id="{{ a.id }}" data-source-entry-id="{{ a.entry_id }}" data-source-label="{{ a.name }}" data-text="{{ a.name }} besprechen">{{ icon('calendar') }} Für Termin vormerken</button>
+<form method="post" action="{{ url_for('attachment_delete',aid=a.id) }}" data-async data-confirm="Diesen Anhang endgültig löschen? Der Eintrag selbst bleibt erhalten."><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="text-button danger" aria-label="Anhang löschen: {{ a.name }}">{{ icon('delete') }} Löschen</button></form>
+{% if a.mime in ['audio/webm','audio/ogg','audio/mp4'] %}<audio class="voice-player" controls preload="none" src="{{ url_for('attachment_audio',aid=a.id) }}" aria-label="{{ a.name }}"></audio>{% endif %}
+{% if pdf %}<button type="button" class="text-button pdf-preview-button" aria-label="PDF-Vorschau: {{ a.name }}" aria-haspopup="dialog" aria-expanded="false" aria-controls="pdf-preview">{{ icon('eye') }} Vorschau</button>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro pagination() %}{% if pages is defined and pages>1 %}<nav class="pagination" aria-label="Ergebnisseiten">{% if page>1 %}<a class="button" href="{{ query_url(page=page-1) }}">Zurück</a>{% endif %}<span>Seite {{ page }} von {{ pages }} · {{ total }} Treffer</span>{% if page<pages %}<a class="button" href="{{ query_url(page=page+1) }}">Weiter</a>{% endif %}</nav>{% endif %}{% endmacro %}

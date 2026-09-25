@@ -1,0 +1,21 @@
+# Eigene Daten – niemals ins Repository
+instance/
+video-demo/
+*.db
+*.sqlite3
+*.key
+*.pem
+.env
+*.log
+
+# Werkzeuge und Zwischenstände
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+
+# Bildschirmfotos aus früheren Überarbeitungen
+docs/ui-review/
+docs/ui-improved/

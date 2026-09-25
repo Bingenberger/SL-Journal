@@ -1,0 +1,13 @@
+{% macro recurrence_fields(editing=false) %}
+<div data-recurrence-controls>
+<label>Wiederholung<select name="repeat_frequency" data-repeat-frequency>{% if not editing %}<option value="">Keine Wiederholung</option>{% endif %}{% for key,label in recurrence_frequencies.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label>
+<div data-repeat-options hidden>
+<div class="form-row"><label data-repeat-interval>Abstand<input type="number" name="repeat_interval" min="1" max="52" value="1"><span class="small muted" data-repeat-unit>Wochen</span></label><label>Letzter Termin<input type="date" name="repeat_until"></label></div>
+<div data-repeat-dates hidden><div data-date-rows></div><button type="button" class="button small" data-add-date>{{ icon('plus') }} Weiterer Termin</button><details><summary>Mehrere Termine als Text einfügen</summary><label>Termine<textarea name="repeat_dates" rows="4" placeholder="2026-10-02&#10;2026-11-06"></textarea><span class="small muted">Je Zeile ein Datum im Format JJJJ-MM-TT. Änderungen ersetzen die Datumsauswahl oben.</span></label></details></div>
+<p class="small muted" data-repeat-pattern>Der erste Fälligkeitstermin bestimmt Wochentag bzw. Monatstag. Fehlt der Monatstag, gilt der letzte Tag des Monats.</p>
+<p class="small muted">Titelplatzhalter beziehen sich auf die Fälligkeit: <code>{KW}</code> Kalenderwoche, <code>{MONAT}</code> Monatsnummer, <code>{MONATSNAME}</code>, <code>{QUARTAL}</code>, <code>{JAHR}</code>, <code>{KW_JAHR}</code> ISO-Wochenjahr, <code>{DATUM}</code>.</p>
+<p class="small">Beispiel: <code>Statistik KW{KW} abgeben</code></p>
+<p class="recurrence-preview" data-repeat-preview role="status" aria-live="polite"></p>
+<p class="small muted">Das Journal erzeugt Aufgaben beim Öffnen automatisch bis 14 Tage im Voraus, auch wenn frühere Aufgaben noch offen sind. Erledigte Aufgaben bleiben erhalten.</p>
+</div></div>
+{% endmacro %}

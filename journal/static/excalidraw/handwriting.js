@@ -1,0 +1,1 @@
+import"./chunk-RJ2R4FVC.js";window.EXCALIDRAW_ASSET_PATH="/static/excalidraw/";import("./handwriting-app-GAUXZM6C.js").catch(e=>{console.error(e);let r=document.getElementById("sheet-status");r.dataset.error="true",r.textContent="Der Zeicheneditor konnte nicht geladen werden. Bitte die Seite neu laden."});

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import empty with context %}
+{% block breadcrumb %}Kontakte{% endblock %}
+{% from 'macros.html' import pagination with context %}{% block content %}
+<div class="page-heading"><div><div class="eyebrow">MENSCHEN IM SCHULALLTAG</div><h1>Kontakte</h1><p class="subtitle">Ansprechpersonen und neue Namen aus Ihren Einträgen.</p></div><button class="button primary" data-dialog="person-dialog">{{ icon('plus') }} Neuer Kontakt</button></div>
+
+<form class="filter-bar" action="{{ url_for('people') }}" method="get"><input name="q" data-search-scope="people" aria-label="Kontakte durchsuchen" placeholder="Name, Rolle, Institution, Mail oder Telefon suchen …" value="{{ request.args.get('q','') }}"><select name="institution" aria-label="Nach Institution filtern"><option value="">Alle Institutionen</option>{% for institution in all_institutions %}<option value="{{ institution }}" {{ 'selected' if institution==selected_institution }}>{{ institution }}</option>{% endfor %}{% if selected_institution and selected_institution not in all_institutions %}<option value="{{ selected_institution }}" selected>{{ selected_institution }}</option>{% endif %}</select><button class="button">{{ icon('search') }} Suchen</button>{% if request.args.get('q') or selected_institution %}<a class="text-button" href="{{ url_for('people') }}">Filter zurücksetzen</a>{% endif %}</form>
+<details class="panel padded contact-suggestions" id="suggestions">
+<summary>Vorschläge für neue Kontakte <span class="number">{{ suggestions|length }}</span></summary>
+<p class="small muted">Neue Namen aus „Beteiligte“ werden hier gesammelt. Bei der Übernahme werden die zugehörigen Einträge automatisch verknüpft.</p>
+{% for s in suggestions %}
+<article class="contact-suggestion" data-suggestion-id="{{ s.id }}">
+<div class="suggestion-info"><h3>{{ s.name }}</h3><p class="small muted">{{ s.entry_count }} {{ 'Eintrag' if s.entry_count==1 else 'Einträge' }}</p><div class="suggestion-entries">{% for e in s.entries %}<a href="{{ url_for('entry_view',eid=e.id) }}">{{ e.title }} <span>{{ e.date|de_date }}</span></a>{% endfor %}</div></div>
+<div class="suggestion-actions"><button class="button small primary" data-new-contact-suggestion='{{ s|tojson }}'>{{ icon('check') }} Als Kontakt übernehmen</button><button class="button small" data-link-suggestion='{{ s|tojson }}'>{{ icon('link') }} Vorhandenem Kontakt zuordnen</button><form action="{{ url_for('suggestion_status',sid=s.id) }}" method="post" data-async><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="status" value="ignored"><button class="text-button">{{ icon('close') }} Verwerfen</button></form></div>
+</article>
+{% else %}<p class="small muted">Zurzeit gibt es keine neuen Kontaktvorschläge.</p>{% endfor %}
+{% if ignored %}<details><summary>Verworfene Vorschläge ({{ ignored|length }})</summary>{% for s in ignored %}<div class="ignored-suggestion"><span>{{ s.name }}</span><form action="{{ url_for('suggestion_status',sid=s.id) }}" method="post" data-async><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="status" value="pending"><button class="text-button">{{ icon('reset') }} Wiederherstellen</button></form></div>{% endfor %}</details>{% endif %}
+</details>
+<div class="card-grid contact-list">
+{% for p in people %}<section class="panel contact-row"><div><h2><a href="{{ url_for('person_view',pid=p.id) }}">{{ p.name }}</a></h2>{% if p.role %}<p class="muted">Rolle: {{ p.role }}</p>{% endif %}</div><div>{% if p.institution %}<p>Institution: <a class="text-button" href="{{ url_for('people',institution=p.institution) }}">{{ p.institution }}</a></p>{% endif %}</div><div>{% if p.emails %}<p class="muted">{{ p.emails }}</p>{% endif %}{% if p.phone %}<p class="muted">Telefon: {{ p.phone }}</p>{% endif %}</div><div class="contact-links"><a class="text-button" href="{{ url_for('person_view',pid=p.id) }}">{{ p.entry_count }} Einträge {{ icon('forward') }}</a><button class="text-button" data-edit-person='{{ p|tojson }}'>{{ icon('edit') }} Bearbeiten</button></div></section>
+{% else %}{{ empty('Die richtigen Menschen im Blick','Keine passenden Kontakte vorhanden. Legen Sie einen Kontakt an oder übernehmen Sie einen Vorschlag.','people') }}{% endfor %}
+</div>
+{{ pagination() }}{% endblock %}

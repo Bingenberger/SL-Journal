@@ -1,0 +1,24 @@
+[Unit]
+Description=Schulleitungsjournal
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=journal
+Group=journal
+WorkingDirectory=/opt/schulleitungsjournal
+EnvironmentFile=/etc/schulleitungsjournal/journal.env
+ExecStart=/opt/schulleitungsjournal/.venv/bin/waitress-serve --listen=127.0.0.1:8088 --threads=4 --trusted-proxy=127.0.0.1 --trusted-proxy-headers="x-forwarded-for x-forwarded-proto x-forwarded-host" wsgi:app
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/schulleitungsjournal /var/backups/schulleitungsjournal
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

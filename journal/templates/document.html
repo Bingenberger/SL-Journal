@@ -1,0 +1,21 @@
+
+{% extends 'base.html' %}
+{% block breadcrumb %}Nextcloud-Dokument{% endblock %}
+{% block content %}<a class="back-link" data-context-back href="{{ url_for('entry_list') }}">{{ icon('back') }} Alle Einträge</a>
+<div class="page-heading"><div><div class="eyebrow">VERKNÜPFTES DOKUMENT</div><h1>{{ document.name }}</h1><p class="subtitle">Datei oder Ordner in Nextcloud</p></div><button class="button" data-edit-document='{{ document|tojson }}'>{{ icon('edit') }} Bearbeiten</button></div>
+<section class="panel padded"><button class="button small" data-plan-meeting data-meeting-document-id="{{ document.id }}" data-source-label="{{ document.name }}" data-text="{{ document.name }} besprechen">{{ icon('calendar') }} Für Termin vormerken</button>
+{% if document.description %}<div class="markdown">{{ document.description|md }}</div>{% endif %}
+{% if lesbar %}<div class="document-viewer" data-document-viewer data-info-url="{{ url_for('document_info',did=document.id) }}" data-pages-url="{{ url_for('document_page',did=document.id,page=0)[:-1] }}">
+<div class="viewer-stage"><img data-viewer-image alt="Seitenansicht von {{ document.name }}" hidden><p class="viewer-status" role="status">Vorschau wird geladen …</p></div>
+<div class="viewer-bar" hidden data-viewer-bar><button type="button" class="mini-button" data-viewer-prev>{{ icon('previous') }} Zurück</button><span class="viewer-count" data-viewer-count></span><button type="button" class="mini-button" data-viewer-next>Weiter {{ icon('next') }}</button><a class="mini-button" href="{{ url_for('document_file',did=document.id) }}">{{ icon('download') }} Herunterladen</a></div>
+</div>{% elif nextcloud %}<p class="small muted">Dieser Link zeigt nicht auf die eingerichtete Nextcloud – deshalb ist hier keine Vorschau möglich.</p>{% else %}<p class="small muted">Sobald die Nextcloud in den Einstellungen verbunden ist, erscheint das Dokument hier direkt im Journal.</p>{% endif %}
+<a class="button primary" href="{{ document.url }}" target="_blank" rel="noopener noreferrer">In Nextcloud öffnen {{ icon('external') }}</a>
+<p class="small muted wrap document-url">{{ document.url }}</p>
+<p class="small muted">Der Link öffnet den aktuellen Stand in Nextcloud. Für die Anzeige oben holt das Journal die Datei selbst und hält sie kurz verschlüsselt vor; eine dauerhafte Kopie entsteht nicht.</p>
+<form method="post" action="{{ url_for('document_delete',did=document.id) }}" data-async data-confirm="Diesen Dokumentverweis überall entfernen? Die Datei in Nextcloud bleibt unverändert."><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="text-button danger">{{ icon('delete') }} Dokumentverweis löschen</button></form>
+</section>
+<div class="card-grid">
+<section class="panel padded"><h2>Zugeordnete Einträge</h2>{% for e in document_entries %}<p><a class="text-button" href="{{ url_for('entry_view',eid=e.id) }}">{{ e.title }}</a></p>{% else %}<p class="small muted">Keine direkte Zuordnung zu einem Eintrag.</p>{% endfor %}</section>
+<section class="panel padded"><h2>Direkt zugeordnete Projekte</h2>{% for p in document_projects %}<p><a class="text-button" href="{{ url_for('project_view',pid=p.id) }}">{{ p.name }}</a></p>{% else %}<p class="small muted">Keine direkte Zuordnung zu einem Projekt.</p>{% endfor %}</section>
+</div>
+{% endblock %}

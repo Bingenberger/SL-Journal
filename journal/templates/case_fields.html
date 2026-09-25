@@ -1,0 +1,3 @@
+{% macro case_field(name='cases', selected=[], single=false, label='Vorgänge', items=none, existing_only=false) %}
+<label>{{ label }}<select name="{{ name }}" data-autocomplete="cases" {% if existing_only %}data-existing-only="true"{% endif %} {% if items is not none %}data-case-items='{{ items|tojson }}'{% endif %} data-label="{{ label }}" data-include-closed="true" {% if not single %}multiple{% endif %}><option value="">Ohne Vorgang</option>{% for c in all_cases %}<option value="{{ c.id }}" data-label="{{ c.title }}" data-detail="{{ case_statuses[c.status] }}" {{ 'selected' if c.id in selected }}>{{ c.title }} · {{ case_statuses[c.status] }}</option>{% endfor %}</select></label>
+{% endmacro %}

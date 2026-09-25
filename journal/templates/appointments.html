@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% from 'macros.html' import pagination with context %}
+{% block breadcrumb %}Termine vorbereiten{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('cockpit') }}">Zum Tagescockpit</a>
+<div class="page-heading"><div><h1>Termine vorbereiten</h1><p class="subtitle">Besprechungspunkte und Unterlagen für Ihre Nextcloud-Termine.</p></div><form action="{{ url_for('appointments_sync') }}" method="post" data-async><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="start_date" value="{{ start }}"><button class="button">{{ icon('processes') }} Kalender aktualisieren</button></form></div>
+<form class="filter-bar" method="get"><input name="q" data-search-scope="appointments" value="{{ request.args.get('q','') }}" placeholder="Termin suchen …" aria-label="Termine durchsuchen"><label>Termine ab<input type="date" name="from" value="{{ start }}"></label><button class="button">{{ icon('search') }} Suchen</button></form>
+<p class="small muted">„Kalender aktualisieren“ lädt 90 Tage ab dem gewählten Datum. Frühere Termine mit offenen Besprechungspunkten bleiben sichtbar.</p>
+{% for event in events %}<section class="panel padded"><a href="{{ url_for('appointment_view',aid=event.id) }}"><h2>{{ event.title }}</h2><p>{{ event.date|de_date }} · {{ event.time or 'Ganztägig' }} · {{ event.calendar }}</p><span class="pill">{{ event.open_count }} offene Besprechungspunkte</span>{% if event.state=='missing' %}<span class="pill warning">Nicht mehr im Kalender bestätigt</span>{% endif %}</a></section>{% else %}<div class="panel padded">Keine passenden Termine geladen. Aktualisieren Sie den Kalender oder prüfen Sie die <a class="text-button" href="{{ url_for('settings') }}">Nextcloud-Einstellungen</a>.</div>{% endfor %}{{ pagination() }}
+{% endblock %}

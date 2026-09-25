@@ -1,0 +1,30 @@
+{
+  "dependencies": {
+    "@codemirror/autocomplete": "6.20.3",
+    "@codemirror/commands": "6.11.1",
+    "@codemirror/lang-markdown": "6.5.2",
+    "@codemirror/language": "6.12.4",
+    "@codemirror/state": "6.7.5",
+    "@codemirror/view": "6.43.12",
+    "@excalidraw/excalidraw": "0.18.1",
+    "@lezer/markdown": "1.7.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@phosphor-icons/core": "2.1.1",
+    "esbuild": "0.28.2"
+  },
+  "name": "schulleitungsjournal-editor",
+  "private": true,
+  "scripts": {
+    "build:editor": "node frontend/build.mjs",
+    "build:icons": "node frontend/build-icons.mjs",
+    "build:handwriting": "node frontend/build-handwriting.mjs"
+  },
+  "overrides": {
+    "nanoid@3.3.3": "3.3.18",
+    "nanoid@4.0.2": "5.1.16",
+    "lodash-es": "4.18.1"
+  }
+}

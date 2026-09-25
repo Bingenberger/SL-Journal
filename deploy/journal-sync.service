@@ -1,0 +1,18 @@
+[Unit]
+Description=Schulleitungsjournal – Mail und Kalender abrufen
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=journal
+Group=journal
+WorkingDirectory=/opt/schulleitungsjournal
+EnvironmentFile=/etc/schulleitungsjournal/journal.env
+ExecStart=/opt/schulleitungsjournal/.venv/bin/python manage.py sync
+TimeoutStartSec=15min
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/schulleitungsjournal

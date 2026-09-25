@@ -1,0 +1,10 @@
+<dialog id="voice-dialog" aria-labelledby="voice-heading">
+<div class="dialog-heading"><h2 id="voice-heading">{{ icon('microphone') }} Sprachi</h2><button type="button" class="icon-button" data-voice-close aria-label="Schließen">{{ icon('close') }}</button></div>
+<p class="small muted">Eine kurze Aufnahme für das heutige Tagesjournal. Maximal 10 Minuten.</p>
+<p data-voice-status role="status" aria-live="polite">Bereit zur Aufnahme.</p>
+<p class="voice-clock" data-voice-clock aria-label="Aufnahmedauer">00:00</p>
+<audio class="voice-player" data-voice-preview controls hidden></audio>
+<p class="form-error" data-voice-error role="alert" hidden></p>
+<div class="actions"><button type="button" class="button" data-voice-start>{{ icon('microphone') }} Aufnahme starten</button><button type="button" class="button" data-voice-stop hidden>{{ icon('stop') }} Aufnahme stoppen</button></div>
+<div class="dialog-footer"><button type="button" class="button" data-voice-close>{{ icon('close') }} Abbrechen</button><button type="button" class="button primary" data-voice-save disabled>{{ icon('check') }} Im Tagesjournal speichern</button></div>
+</dialog>
