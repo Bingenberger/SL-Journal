@@ -41,6 +41,12 @@ systemctl --user enable --now journal.service journal-sync.timer journal-mainten
 
 Die Synchronisierung läuft alle fünf Minuten. Die tägliche Wartung wendet konfigurierte Löschfristen an und erstellt ein verschlüsseltes Backup. Ein ausgeschaltetes Dienstgerät kann keine Dienste ausführen; verpasste tägliche Wartung wird nachgeholt, wenn der Benutzerdienst wieder läuft. Ohne Timer bleibt der manuelle Synchronisieren-Button nutzbar.
 
+### Seitenleiste
+
+Die Navigationsleiste hat einen eigenen Bildlauf. Auf flachen Bildschirmen — ein Tablet im Querformat etwa — passt sie sonst nicht vollständig aufs Bild, und ihr unteres Ende mit Einstellungen und Abmeldung bliebe unerreichbar.
+
+**Seitenleiste einklappen** oben in der Leiste schaltet auf eine schmale Spalte mit nur den Symbolen um; beim Zeigen auf ein Symbol nennt ein Hinweis das Ziel. Die Schaltfläche bleibt beim Blättern am oberen Rand stehen. Der Zustand merkt sich pro Gerät in einem Cookie, sodass die Leiste schon beim Seitenaufbau in der gewählten Breite erscheint und nicht kurz aufblitzt. Auf dem Telefon steht die Navigation ohnehin waagerecht über dem Inhalt; dort bleibt die Einstellung ohne Wirkung.
+
 ## Bedienung
 
 - **Tagescockpit:** Datum wählen oder vor-/zurückblättern, Termine, getrennte ein- und ausgehende Kommunikation, Gesprächsnotizen, Journal und Aufgaben sehen.

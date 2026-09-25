@@ -23,7 +23,7 @@ def test_overview_counts_and_links_match_filtered_entries(app,client):
     response,data=context(app,client,'/tags')
     counts={tag['name']:tag['count'] for tag in data['tags']}
     assert counts=={'Öffentlichkeit':2,'100%_Plan':1,'Plan':1,'Planung':1}
-    assert 'Tags</a>' in response.text
+    assert '<span class="nav-label">Tags</span>' in response.text
     for label,count in counts.items():
         response,filtered=context(app,client,'/entries?'+urlencode({'tag':label}))
         assert filtered['total']==count

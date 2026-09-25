@@ -21,7 +21,7 @@ const ICONS={
   // Handlungen: Bearbeiten, Löschen, Speichern, Filtern, Verknüpfen …
   edit:'pencil-simple', delete:'trash', filter:'funnel', reset:'arrow-counter-clockwise',
   link:'link-simple', upload:'upload-simple', eye:'eye', qr:'qr-code', stop:'stop-circle',
-  pause:'pause', play:'play', menu:'list',
+  pause:'pause', play:'play', menu:'list', sidebar:'sidebar-simple',
   // Dateibrowser der Nextcloud
   folder:'folder', file:'file', home:'house'
 };

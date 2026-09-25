@@ -19,6 +19,32 @@
       try{localStorage.setItem(storageKey,selected);}catch{}
     });
   }
+  // Seitenleiste ein- und ausklappen. Der Zustand steht in einem Cookie, damit
+  // der Server die Klasse schon beim Ausliefern setzt – sonst würde die Leiste
+  // bei jedem Seitenwechsel kurz in der falschen Breite aufblitzen.
+  const sidebarToggle=document.querySelector('[data-sidebar-toggle]');
+  if(sidebarToggle){
+    const labels=[...document.querySelectorAll('.sidebar nav a, .sidebar-bottom > a')];
+    const anzeigen=eingeklappt=>{
+      document.body.classList.toggle('sidebar-collapsed',eingeklappt);
+      sidebarToggle.setAttribute('aria-expanded',String(!eingeklappt));
+      sidebarToggle.querySelector('.nav-label').textContent=
+        eingeklappt?'Seitenleiste ausklappen':'Seitenleiste einklappen';
+      // Eingeklappt bleibt nur das Symbol übrig; der Titel nennt das Ziel beim
+      // Zeigen. Ausgeklappt steht die Beschriftung daneben und der Titel stört.
+      for(const link of labels){
+        const text=link.querySelector('.nav-label')?.textContent.trim();
+        if(eingeklappt&&text)link.title=text; else link.removeAttribute('title');
+      }
+    };
+    anzeigen(document.body.classList.contains('sidebar-collapsed'));
+    sidebarToggle.addEventListener('click',()=>{
+      const eingeklappt=!document.body.classList.contains('sidebar-collapsed');
+      anzeigen(eingeklappt);
+      document.cookie='sidebar='+(eingeklappt?'collapsed':'expanded')
+        +'; path=/; max-age=31536000; samesite=strict'+(location.protocol==='https:'?'; secure':'');
+    });
+  }
   const snapshots=new WeakMap();
   function snapshot(form) {
     // Do not construct FormData here: autocomplete uses that event when saving.

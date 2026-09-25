@@ -489,3 +489,43 @@ svg.mail-direction{width:15px;height:15px;margin-top:2px;flex:none;color:var(--m
 
 /* Compact, readable email previews across overview cards. */
 .mail-preview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere;color:var(--muted);font-size:13px;line-height:1.55;margin:10px 0 12px;white-space:normal}
+
+/* Seitenleiste: eigener Bildlauf, damit auf flachen Bildschirmen (Tablet quer)
+   nichts unten abgeschnitten wird – und ein Zustand, in dem nur Symbole stehen. */
+.sidebar{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-bottom:14px}
+.sidebar-toggle{display:flex;align-items:center;gap:13px;width:100%;margin:0 0 12px;padding:9px 13px;
+  border:0;background:var(--paper);border-radius:7px;color:#65767a;font-size:12px;font-weight:500;text-align:left;
+  position:sticky;top:0;z-index:2}
+.sidebar-toggle:hover{background:#f4f7f6;color:var(--teal)}
+.sidebar-toggle .icon{width:22px;height:22px;flex:none}
+
+body.sidebar-collapsed .sidebar{width:72px;padding-left:10px;padding-right:10px}
+body.sidebar-collapsed .workspace{margin-left:72px}
+body.sidebar-collapsed .school-label,
+body.sidebar-collapsed .side-projects,
+body.sidebar-collapsed .profile>div{display:none}
+/* Beschriftungen verschwinden nur aus dem Bild, nicht aus dem Bedienbaum:
+   sonst hätten Vorlesesoftware und Sprachsteuerung namenlose Schaltflächen. */
+body.sidebar-collapsed .sidebar .nav-label,
+body.sidebar-collapsed .brand>span:last-child{position:absolute;width:1px;height:1px;
+  margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+body.sidebar-collapsed .brand{margin:0 0 22px;justify-content:center}
+body.sidebar-collapsed .sidebar nav a,
+body.sidebar-collapsed .sidebar-bottom>a,
+body.sidebar-collapsed .sidebar-toggle{justify-content:center;gap:0;padding:10px 0;position:relative}
+body.sidebar-collapsed .sidebar nav .count{position:absolute;top:1px;right:4px;margin:0;font-size:9px;padding:0 4px}
+body.sidebar-collapsed .profile{justify-content:center;gap:7px}
+body.sidebar-collapsed .profile form{margin:0}
+
+/* Unter 700px steht die Leiste ohnehin waagerecht über dem Inhalt; der
+   eingeklappte Zustand wäre dort sinnlos und wird vollständig aufgehoben. */
+@media(max-width:700px){
+  .sidebar{overflow:visible;padding-bottom:8px}
+  .sidebar-toggle{display:none}
+  body.sidebar-collapsed .sidebar{width:100%;padding:16px 16px 8px}
+  body.sidebar-collapsed .workspace{margin-left:0}
+  body.sidebar-collapsed .sidebar .nav-label,
+  body.sidebar-collapsed .brand>span:last-child{position:static;width:auto;height:auto;
+    margin:0;overflow:visible;clip:auto;white-space:normal}
+  body.sidebar-collapsed .sidebar nav a{justify-content:flex-start;gap:6px;padding:7px 10px}
+}

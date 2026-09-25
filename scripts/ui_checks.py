@@ -115,7 +115,42 @@ def check_ui(page,app):
     page.keyboard.press('Escape')
     page.set_viewport_size({'width':1280,'height':960})
 
-    print('UI geprüft: 27 responsive Ansichten, 100 Kontakte, Speichern im Sichtbereich, Entwurfsschutz, mobile Prioritäten, Filter, direkte Tags und kompakte Zuordnungen.')
+    # Seitenleiste: eigener Bildlauf auf flachen Bildschirmen, Ein-/Ausklappen
+    # mit erhaltenen Bedienbaumnamen, und auf dem Telefon ohne Wirkung.
+    page.set_viewport_size({'width':1024,'height':768})
+    page.goto(origin+'/')
+    lage=page.evaluate("""()=>{const s=document.querySelector('.sidebar');
+      return {laeuft:s.scrollHeight>s.clientHeight,bildlauf:getComputedStyle(s).overflowY};}""")
+    assert lage['bildlauf']=='auto', 'Die Seitenleiste braucht einen eigenen Bildlauf'
+    if lage['laeuft']:
+        page.evaluate("()=>document.querySelector('.sidebar').scrollTo(0,9999)")
+        unten=page.evaluate("()=>Math.round(document.querySelector('.profile').getBoundingClientRect().bottom)<=innerHeight+1")
+        assert unten, 'Das untere Ende der Seitenleiste bleibt unerreichbar'
+    page.get_by_role('button',name='Seitenleiste einklappen').click()
+    schmal=page.evaluate("""()=>({breite:Math.round(document.querySelector('.sidebar').getBoundingClientRect().width),
+      rand:getComputedStyle(document.querySelector('.workspace')).marginLeft,
+      sichtbar:document.querySelector('.sidebar nav a .nav-label').getBoundingClientRect().width})""")
+    assert schmal['breite']<90 and schmal['rand']==f"{schmal['breite']}px", f'Eingeklappt unerwartet: {schmal}'
+    assert schmal['sichtbar']<=1, 'Eingeklappt sollen nur die Symbole zu sehen sein'
+    for name in ('Tagescockpit','Posteingang','Einstellungen'):
+        expect(page.get_by_role('link',name=name).first).to_have_count(1)
+    page.screenshot(path='docs/screenshots/seitenleiste-eingeklappt.png')
+    page.reload()
+    assert page.evaluate("()=>document.body.classList.contains('sidebar-collapsed')"), 'Der Zustand soll erhalten bleiben'
+    # Auf dem Telefon hebt das Layout den eingeklappten Zustand auf.
+    page.set_viewport_size({'width':390,'height':844})
+    page.reload()
+    mobil=page.evaluate("""()=>({breite:Math.round(document.querySelector('.sidebar').getBoundingClientRect().width),
+      ueberlauf:document.documentElement.scrollWidth-innerWidth,
+      label:getComputedStyle(document.querySelector('.sidebar nav a .nav-label')).position})""")
+    # Die Navigation steckt mobil hinter „Menü", daher die Stilangabe statt der Größe.
+    assert mobil['breite']>300 and mobil['ueberlauf']<=0, f'Mobil unerwartet: {mobil}'
+    assert mobil['label']=='static', 'Mobil sollen die Beschriftungen wieder mitlaufen'
+    page.set_viewport_size({'width':1280,'height':960})
+    page.goto(origin+'/')
+    page.get_by_role('button',name='Seitenleiste ausklappen').click()
+
+    print('UI geprüft: 27 responsive Ansichten, 100 Kontakte, Speichern im Sichtbereich, Entwurfsschutz, mobile Prioritäten, Filter, direkte Tags, kompakte Zuordnungen und die ein-/ausklappbare Seitenleiste.')
 
 
 if __name__=='__main__':
