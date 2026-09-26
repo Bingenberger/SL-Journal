@@ -2,7 +2,16 @@
 
 Eine selbst gehostete Einzelplatz-Webanwendung nach dem beigefügten Lastenheft. Python 3.12+, Flask, SQLCipher/SQLite, serverseitige HTML-Oberfläche mit responsivem Layout. Keine CDN-Abhängigkeiten, externen Schriftarten oder Telemetrie.
 
+[Ausführliche Funktionsvorstellung für Grundschulleitungen mit Screenshots](docs/APP-VORSTELLUNG.md)
+
 ## Lokal starten
+
+Schritt-für-Schritt-Anleitungen für Einsteiger:
+
+- [Windows: Installation und lokale Nutzung](docs/INSTALLATION-WINDOWS.md)
+- [macOS: Installation und lokale Nutzung](docs/INSTALLATION-MACOS.md)
+
+Diese Anleitungen berücksichtigen die abweichende SQLCipher-Paketinstallation auf Windows und macOS. Die folgenden Kurzbefehle sind für die bisherige Linux-Umgebung gedacht.
 
 Voraussetzungen: Python 3.12 oder neuer sowie `poppler-utils` (PDF-Vorschau) und optional LibreOffice (Vorschau von Word-, Excel- und PowerPoint-Dateien). Umgebung anlegen:
 
