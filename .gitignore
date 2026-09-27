@@ -19,3 +19,16 @@ __pycache__/
 # Bildschirmfotos aus früheren Überarbeitungen
 docs/ui-review/
 docs/ui-improved/
+
+# Android: Bauergebnisse, lokale Pfade und Signierschlüssel
+android/build/
+android/*/build/
+android/.gradle/
+android/.idea/
+android/.kotlin/
+android/captures/
+android/local.properties
+*.jks
+*.keystore
+*.apk
+*.aab
