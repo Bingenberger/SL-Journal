@@ -324,16 +324,8 @@ def create_app(test_config=None):
 
     @app.post('/voice/save')
     def voice_save():
-        upload=request.files.get('audio')
-        formats={'audio/webm':'webm','audio/ogg':'ogg','audio/mp4':'m4a'}
-        if not upload or upload.mimetype not in formats:
-            raise ValueError('Bitte eine Audioaufnahme aufnehmen.')
-        content=upload.read(25*1024*1024+1)
-        if not content or len(content)>25*1024*1024:
-            raise ValueError('Die Aufnahme muss zwischen 1 Byte und 25 MB groß sein.')
-        stamp=now()
-        eid=save_entry(dict(type='journal',date=stamp.date().isoformat(),time=stamp.strftime('%H:%M'),title='Sprachi · '+stamp.strftime('%d.%m.%Y · %H:%M'),body=''))
-        save_attachment(eid,'Sprachi-'+stamp.strftime('%Y-%m-%d-%H%M%S')+'.'+formats[upload.mimetype],content,upload.mimetype)
+        from .domain import save_voice
+        _,stamp=save_voice(request.files.get('audio'))
         return result('Sprachi im Tagesjournal gespeichert.',url_for('cockpit',date=stamp.date().isoformat()))
 
     @app.get('/attachment/<int:aid>/audio')

@@ -28,10 +28,14 @@ import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.Draw
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -59,7 +63,10 @@ import androidx.compose.ui.unit.dp
 import de.sljournal.android.AppViewModel
 import de.sljournal.android.data.Entry
 import de.sljournal.android.data.TaskDraft
+import de.sljournal.android.ui.components.AttachmentPlayer
 import de.sljournal.android.ui.components.EntryChips
+import de.sljournal.android.ui.components.isAudio
+import de.sljournal.android.ui.components.rememberAttachmentPlayer
 import de.sljournal.android.ui.components.ErrorState
 import de.sljournal.android.ui.components.Load
 import de.sljournal.android.ui.components.Loading
@@ -92,6 +99,16 @@ fun EntryDetail(app: AppViewModel, entryId: Int, onEdit: (Entry) -> Unit, onBack
     val context = LocalContext.current
     var busy by remember { mutableStateOf(false) }
     var addingTask by remember { mutableStateOf(false) }
+    val audio = rememberAttachmentPlayer()
+    val play: (Int, String) -> Unit = { id, mime ->
+        scope.launch {
+            try {
+                audio.toggle(id, mime) { app.api!!.download(id) }
+            } catch (e: Exception) {
+                snackbar.showSnackbar(if (e is de.sljournal.android.data.ApiException) app.handle(e) else "Die Aufnahme lässt sich auf diesem Gerät nicht abspielen.")
+            }
+        }
+    }
     val today = app.me.value?.today ?: LocalDate.now().toString()
 
     fun upload(uris: List<Uri>, names: Map<Uri, String> = emptyMap()) {
@@ -155,7 +172,8 @@ fun EntryDetail(app: AppViewModel, entryId: Int, onEdit: (Entry) -> Unit, onBack
                                     if (!twoColumns) Side(entry, today, busy, onToggle = { toggle(app, it, loader.reload, snackbar, scope) }, onAddTask = { addingTask = true },
                                         onPickFiles = { pickFiles.launch(arrayOf("*/*")) },
                                         onPhoto = { newPhotoUri(context).also { photo = it }.let { takePhoto.launch(it.first) } },
-                                        onOpen = { id, name, mime -> open(app, context, id, name, mime, snackbar, scope) })
+                                        onOpen = { id, name, mime -> open(app, context, id, name, mime, snackbar, scope) },
+                                        audio = audio, onPlay = play)
                                     Spacer(Modifier.size(24.dp))
                                 }
                                 if (twoColumns) {
@@ -163,7 +181,8 @@ fun EntryDetail(app: AppViewModel, entryId: Int, onEdit: (Entry) -> Unit, onBack
                                         Side(entry, today, busy, onToggle = { toggle(app, it, loader.reload, snackbar, scope) }, onAddTask = { addingTask = true },
                                             onPickFiles = { pickFiles.launch(arrayOf("*/*")) },
                                             onPhoto = { newPhotoUri(context).also { photo = it }.let { takePhoto.launch(it.first) } },
-                                            onOpen = { id, name, mime -> open(app, context, id, name, mime, snackbar, scope) })
+                                            onOpen = { id, name, mime -> open(app, context, id, name, mime, snackbar, scope) },
+                                        audio = audio, onPlay = play)
                                     }
                                 }
                             }
@@ -285,6 +304,8 @@ private fun Side(
     onPickFiles: () -> Unit,
     onPhoto: () -> Unit,
     onOpen: (Int, String, String) -> Unit,
+    audio: AttachmentPlayer,
+    onPlay: (Int, String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         SectionTitle("Aufgaben", entry.tasks.size) {
@@ -304,6 +325,18 @@ private fun Side(
                 Column(Modifier.weight(1f)) {
                     Text(a.name, style = MaterialTheme.typography.bodyMedium)
                     Text(formatSize(a.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (isAudio(a.mime)) {
+                    // Sprachis direkt hier anhören, wie im Browser.
+                    when {
+                        audio.loadingId == a.id -> CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                        else -> FilledTonalIconButton(onClick = { onPlay(a.id, a.mime) }) {
+                            Icon(
+                                if (audio.playingId == a.id) Icons.Outlined.Stop else Icons.Outlined.PlayArrow,
+                                if (audio.playingId == a.id) "Wiedergabe stoppen" else "Anhören: ${a.name}",
+                            )
+                        }
+                    }
                 }
             }
         }

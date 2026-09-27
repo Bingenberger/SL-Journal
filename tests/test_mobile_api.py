@@ -173,3 +173,32 @@ def test_idle_tokens_expire(api, app):
 def test_own_logout(api):
     assert api('POST', '/logout').status_code == 200
     assert api('GET', '/me').status_code == 401
+
+
+def test_voice_note_from_app(api, app):
+    import io
+    from pathlib import Path
+    from journal.db import cipher
+    from journal.domain import now
+    response = api('POST', '/voice', data={'audio': (io.BytesIO(b'm4a-audio'), 'Sprachi', 'audio/mp4')},
+                   content_type='multipart/form-data')
+    assert response.status_code == 201
+    entry = response.json
+    assert entry['type'] == 'journal' and entry['date'] == now().date().isoformat()
+    assert entry['title'].startswith('Sprachi · ')
+    attachment = entry['attachments'][0]
+    assert attachment['name'].endswith('.m4a') and attachment['mime'] == 'audio/mp4'
+    with app.app_context():
+        stored = one('SELECT path FROM attachments WHERE id=?', (attachment['id'],))['path']
+        encrypted = (Path(app.instance_path) / 'attachments' / stored).read_bytes()
+        assert b'm4a-audio' not in encrypted and cipher().decrypt(encrypted) == b'm4a-audio'
+    assert api('GET', f"/attachments/{attachment['id']}").data == b'm4a-audio'
+
+
+@pytest.mark.parametrize('content,mime', [(b'', 'audio/mp4'), (b'html', 'text/html')])
+def test_invalid_voice_note_from_app(api, app, content, mime):
+    import io
+    response = api('POST', '/voice', data={'audio': (io.BytesIO(content), 'Sprachi', mime)}, content_type='multipart/form-data')
+    assert response.status_code == 400 and response.json['error']
+    with app.app_context():
+        assert one('SELECT count(*) n FROM entries')['n'] == 0

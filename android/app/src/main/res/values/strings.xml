@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">SL-Journal</string>
     <string name="share_label">Ins Journal</string>
+    <string name="shortcut_voice">Sprachi</string>
+    <string name="shortcut_voice_long">Sprachi aufnehmen</string>
 </resources>

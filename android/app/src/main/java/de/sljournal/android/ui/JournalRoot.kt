@@ -1,5 +1,6 @@
 package de.sljournal.android.ui
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import de.sljournal.android.AppViewModel
 import de.sljournal.android.ui.editor.EditorRequest
@@ -45,6 +47,7 @@ import de.sljournal.android.ui.entries.EntryDetail
 import de.sljournal.android.ui.login.LoginScreen
 import de.sljournal.android.ui.tasks.TasksScreen
 import de.sljournal.android.ui.today.TodayScreen
+import de.sljournal.android.ui.voice.VoiceDialog
 
 private enum class Destination(val label: String, val icon: ImageVector) {
     TODAY("Heute", Icons.Outlined.Today),
@@ -60,7 +63,7 @@ private sealed interface Overlay {
 }
 
 @Composable
-fun JournalRoot(app: AppViewModel, shared: EditorRequest?, onSharedConsumed: () -> Unit) {
+fun JournalRoot(app: AppViewModel, shared: EditorRequest?, onSharedConsumed: () -> Unit, voiceRequested: Boolean = false, onVoiceConsumed: () -> Unit = {}) {
     val session by app.session.collectAsState()
     val notice by app.notice.collectAsState()
     if (session == null) {
@@ -79,6 +82,16 @@ fun JournalRoot(app: AppViewModel, shared: EditorRequest?, onSharedConsumed: () 
         }
     }
 
+    // Sprachi: über die Knöpfe oder die App-Verknüpfung auf dem Startbildschirm.
+    var voiceOpen by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(voiceRequested) {
+        if (voiceRequested) {
+            voiceOpen = true
+            onVoiceConsumed()
+        }
+    }
+    val context = LocalContext.current
+
     fun openEntry(id: Int) { overlays += Overlay.Detail(id) }
     fun newEntry(date: String? = null) { overlays += Overlay.Editor(EditorRequest(date = date)) }
     fun pop() { if (overlays.isNotEmpty()) overlays.removeAt(overlays.lastIndex) }
@@ -96,11 +109,26 @@ fun JournalRoot(app: AppViewModel, shared: EditorRequest?, onSharedConsumed: () 
         },
     ) {
         when (destination) {
-            Destination.TODAY -> TodayScreen(app, onOpenEntry = ::openEntry, onNewEntry = { newEntry(it) })
-            Destination.ENTRIES -> EntriesScreen(app, onNewEntry = { newEntry() }, onEdit = { overlays += Overlay.Editor(EditorRequest(existing = it)) })
+            Destination.TODAY -> TodayScreen(app, onOpenEntry = ::openEntry, onNewEntry = { newEntry(it) }, onVoice = { voiceOpen = true })
+            Destination.ENTRIES -> EntriesScreen(app, onNewEntry = { newEntry() }, onEdit = { overlays += Overlay.Editor(EditorRequest(existing = it)) },
+                onVoice = { voiceOpen = true })
             Destination.TASKS -> TasksScreen(app, onOpenEntry = ::openEntry)
             Destination.ACCOUNT -> AccountScreen(app)
         }
+    }
+
+    if (voiceOpen) {
+        VoiceDialog(
+            app,
+            onDismiss = { voiceOpen = false },
+            onSaved = {
+                voiceOpen = false
+                // Wie im Browser: zurück zum Tag, an dem die Sprachi jetzt steht.
+                overlays.clear()
+                destination = Destination.TODAY
+                Toast.makeText(context, "Sprachi im Tagesjournal gespeichert.", Toast.LENGTH_SHORT).show()
+            },
+        )
     }
 
     val top = overlays.lastOrNull() ?: return

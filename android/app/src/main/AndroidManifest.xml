@@ -2,9 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Nur für Sprachi; die Berechtigung wird erst bei der ersten Aufnahme erfragt. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!-- Kamera ist optional; Tablets ohne Kamera können die App trotzdem installieren. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <application
         android:allowBackup="false"
@@ -27,6 +30,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- App-Verknüpfung „Sprachi“: lange auf das App-Symbol drücken. -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
             <!-- „Teilen“ aus anderen Apps: Text, Links, Fotos und Dokumente als neuer Eintrag. -->
             <intent-filter android:label="@string/share_label">
                 <action android:name="android.intent.action.SEND" />

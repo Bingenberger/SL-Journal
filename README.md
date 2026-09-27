@@ -58,7 +58,7 @@ Die Navigationsleiste hat einen eigenen Bildlauf. Auf flachen Bildschirmen — e
 
 ## Android-App
 
-Im Ordner [`android/`](android/README.md) liegt eine Begleit-App für Android-Telefone und -Tablets. Sie zeigt den Tagesüberblick, durchsucht Einträge, legt Einträge mit Beteiligten, Projekten, Vorgängen, Tags, Aufgaben, Fotos und Dateien an, bearbeitet sie und hakt Aufgaben ab. Auf dem Tablet stehen Liste und Detail sowie Text und Zuordnungen nebeneinander, auf dem Telefon untereinander. Inhalte aus anderen Apps lassen sich über „Teilen › Ins Journal“ übernehmen.
+Im Ordner [`android/`](android/README.md) liegt eine Begleit-App für Android-Telefone und -Tablets. Sie zeigt den Tagesüberblick, nimmt Sprachis auf (auch direkt über eine Verknüpfung auf dem Startbildschirm), durchsucht Einträge, legt Einträge mit Beteiligten, Projekten, Vorgängen, Tags, Aufgaben, Fotos und Dateien an, bearbeitet sie und hakt Aufgaben ab. Auf dem Tablet stehen Liste und Detail sowie Text und Zuordnungen nebeneinander, auf dem Telefon untereinander. Inhalte aus anderen Apps lassen sich über „Teilen › Ins Journal“ übernehmen.
 
 Die App meldet sich wie der Browser mit Passwort und Einmalcode an und erhält ein eigenes Gerätetoken; gespeichert wird serverseitig nur dessen Hashwert. Unter **Einstellungen › Angemeldete Geräte** lassen sich Geräte einzeln abmelden. Tokens verfallen nach 90 Tagen ohne Nutzung. Die Schnittstelle liegt unter `/api/v1` (`journal/mobile_api.py`), verlangt HTTPS und ist nur mit gültigem Token nutzbar; die Browseranmeldung schaltet sie nicht frei.
 
