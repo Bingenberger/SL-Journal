@@ -107,10 +107,10 @@ fun EntryEditor(app: AppViewModel, request: EditorRequest, onClose: () -> Unit, 
     var decisions by remember { mutableStateOf(existing?.decisions ?: "") }
     var sender by remember { mutableStateOf(existing?.sender ?: "") }
     var recipients by remember { mutableStateOf(existing?.recipients ?: "") }
-    var participants by remember { mutableStateOf(existing?.participantItems ?: emptyList()) }
-    var projects by remember { mutableStateOf(existing?.projectItems ?: emptyList()) }
-    var cases by remember { mutableStateOf(existing?.caseItems ?: emptyList()) }
-    var tags by remember { mutableStateOf(existing?.tags?.map { Item(kind = "tag", label = it) } ?: emptyList()) }
+    var participants by remember { mutableStateOf<List<Item>>(existing?.participantItems ?: emptyList()) }
+    var projects by remember { mutableStateOf<List<Item>>(existing?.projectItems ?: emptyList()) }
+    var cases by remember { mutableStateOf<List<Item>>(existing?.caseItems ?: emptyList()) }
+    var tags by remember { mutableStateOf<List<Item>>(existing?.tags?.map { Item(kind = "tag", label = it) } ?: emptyList()) }
     val tasks = remember { mutableStateListOf<TaskLine>() }
     val context = LocalContext.current
     val files = remember {
