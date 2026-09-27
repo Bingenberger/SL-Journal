@@ -56,6 +56,14 @@ Die Navigationsleiste hat einen eigenen Bildlauf. Auf flachen Bildschirmen — e
 
 **Seitenleiste einklappen** oben in der Leiste schaltet auf eine schmale Spalte mit nur den Symbolen um; beim Zeigen auf ein Symbol nennt ein Hinweis das Ziel. Die Schaltfläche bleibt beim Blättern am oberen Rand stehen. Der Zustand merkt sich pro Gerät in einem Cookie, sodass die Leiste schon beim Seitenaufbau in der gewählten Breite erscheint und nicht kurz aufblitzt. Auf dem Telefon steht die Navigation ohnehin waagerecht über dem Inhalt; dort bleibt die Einstellung ohne Wirkung.
 
+## Android-App
+
+Im Ordner [`android/`](android/README.md) liegt eine Begleit-App für Android-Telefone und -Tablets. Sie zeigt den Tagesüberblick, durchsucht Einträge, legt Einträge mit Beteiligten, Projekten, Vorgängen, Tags, Aufgaben, Fotos und Dateien an, bearbeitet sie und hakt Aufgaben ab. Auf dem Tablet stehen Liste und Detail sowie Text und Zuordnungen nebeneinander, auf dem Telefon untereinander. Inhalte aus anderen Apps lassen sich über „Teilen › Ins Journal“ übernehmen.
+
+Die App meldet sich wie der Browser mit Passwort und Einmalcode an und erhält ein eigenes Gerätetoken; gespeichert wird serverseitig nur dessen Hashwert. Unter **Einstellungen › Angemeldete Geräte** lassen sich Geräte einzeln abmelden. Tokens verfallen nach 90 Tagen ohne Nutzung. Die Schnittstelle liegt unter `/api/v1` (`journal/mobile_api.py`), verlangt HTTPS und ist nur mit gültigem Token nutzbar; die Browseranmeldung schaltet sie nicht frei.
+
+Eine Debug-APK baut GitHub Actions bei jeder Änderung unter `android/`; Bauanleitung, Zertifikatshinweise und Aufbau stehen in [android/README.md](android/README.md).
+
 ## Bedienung
 
 - **Tagescockpit:** Datum wählen oder vor-/zurückblättern, Termine, getrennte ein- und ausgehende Kommunikation, Gesprächsnotizen, Journal und Aufgaben sehen.

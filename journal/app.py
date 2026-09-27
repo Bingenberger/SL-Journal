@@ -20,6 +20,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from .auth import login_failed, rate_limit, valid_code, verify
 from .db import atomic_write, cipher, close_db, get_db, init_db, one, rows, set_setting, setting
 from .domain import clean_tags, UNPROCESSED_MAIL, MONTHS, PERIODS, TYPES, entries, entry_details, now, process_due, save_attachment, save_entry, save_task, school_year, trigger_process, valid_date
 
@@ -64,6 +65,11 @@ def create_app(test_config=None):
 
     from .handwriting import bp as handwriting_bp
     app.register_blueprint(handwriting_bp)
+    from . import mobile_api
+    app.register_blueprint(mobile_api.bp)
+    with app.app_context():
+        mobile_api.init()
+        get_db().commit()
 
     @app.template_filter('md')
     def render_markdown(text):
@@ -120,6 +126,9 @@ def create_app(test_config=None):
         g.style_nonce = secrets.token_urlsafe(24)
         if app.config['REQUIRE_HTTPS'] and not request.is_secure:
             return 'HTTPS ist erforderlich. Bitte die HTTPS-Adresse verwenden.', 400
+        if request.blueprint == 'mobile_api':
+            # Eigene Tokenprüfung in mobile_api; ohne Cookies kein CSRF-Risiko.
+            return
         if request.method == 'POST':
             token = request.form.get('csrf_token') or request.headers.get('X-CSRF-Token','')
             if not token or not hmac.compare_digest(token,session.get('csrf','')):
@@ -156,25 +165,15 @@ def create_app(test_config=None):
     @app.errorhandler(ValueError)
     def invalid(error):
         get_db().rollback()
-        if request.headers.get('X-Requested-With') == 'fetch':
+        if request.headers.get('X-Requested-With') == 'fetch' or request.path.startswith('/api/v1/'):
             return jsonify(error=str(error)),400
         return render_template('error.html', message=str(error)),400
 
     @app.errorhandler(HTTPException)
     def http_error(error):
+        if request.path.startswith('/api/v1/'):
+            return jsonify(error=error.description),error.code
         return render_template('error.html',message=error.description),error.code
-
-    def rate_limit():
-        limit = one('SELECT * FROM login_limit WHERE id=1')
-        if limit['until'] > time.time():
-            abort(429,'Zu viele Anmeldeversuche. Bitte in 15 Minuten erneut versuchen.')
-
-    def login_failed():
-        db = get_db()
-        db.execute('UPDATE login_limit SET failures=failures+1 WHERE id=1')
-        if one('SELECT failures FROM login_limit WHERE id=1')['failures'] >= 5:
-            db.execute('UPDATE login_limit SET until=?, failures=0 WHERE id=1',(time.time()+900,))
-        db.commit()
 
     @app.route('/setup', methods=['GET','POST'])
     def setup():
@@ -232,23 +231,16 @@ def create_app(test_config=None):
         if request.method == 'POST':
             rate_limit()
             code = request.form.get('otp','')
-            if not code.isascii() or len(code)!=6 or not code.isdigit():
+            if not valid_code(code):
                 login_failed()
                 flash('Bitte einen sechsstelligen Einmalcode eingeben.','error')
                 return render_template('login.html')
-            totp = pyotp.TOTP(account['totp'])
-            counter = int(time.time())//30
-            matched = next((c for c in range(counter-1,counter+2) if hmac.compare_digest(totp.at(c*30),code)),None)
-            if check_password_hash(account['password'],request.form.get('password','')) and matched is not None:
-                cursor = get_db().execute('UPDATE account SET last_totp=? WHERE id=1 AND last_totp<?',(matched,matched))
-                if cursor.rowcount:
-                    get_db().execute('UPDATE login_limit SET failures=0,until=0 WHERE id=1')
-                    get_db().commit()
-                    session.clear()
-                    session.update(auth=True,version=account['session_version'])
-                    session.permanent=True
-                    return redirect(url_for('cockpit'))
-                get_db().rollback()
+            if verify(account,request.form.get('password',''),code):
+                get_db().commit()
+                session.clear()
+                session.update(auth=True,version=account['session_version'])
+                session.permanent=True
+                return redirect(url_for('cockpit'))
             login_failed()
             flash('Passwort oder Einmalcode ungültig. Bereits verwendete Codes können nicht erneut genutzt werden.','error')
         return render_template('login.html')
@@ -1147,7 +1139,12 @@ def create_app(test_config=None):
 
     @app.get('/settings')
     def settings():
-        return render_template('settings.html',imap=setting('imap',{}),caldav=setting('caldav',{}),retention=setting('retention',{}),sync_status=setting('sync_status',{}),backup_status=setting('backup_status'),has_backup_key=(Path(app.instance_path)/'backup.key').exists())
+        return render_template('settings.html',imap=setting('imap',{}),caldav=setting('caldav',{}),retention=setting('retention',{}),sync_status=setting('sync_status',{}),backup_status=setting('backup_status'),has_backup_key=(Path(app.instance_path)/'backup.key').exists(),devices=mobile_api.devices())
+
+    @app.post('/device/<int:did>/revoke')
+    def device_revoke(did):
+        if not mobile_api.revoke(did): abort(404)
+        return result('Das Gerät ist abgemeldet. Die App verlangt dort eine neue Anmeldung.',url_for('settings'))
 
     @app.post('/settings/save')
     def settings_save():

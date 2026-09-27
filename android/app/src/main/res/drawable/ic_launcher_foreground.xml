@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Aufgeschlagenes Journal mit Lesezeichen, im 108dp-Raster mit 18dp Rand. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M36,34h30a6,6 0,0 1,6 6v34H42a6,6 0,0 1,-6 -6z" />
+    <path
+        android:fillColor="#FF25766E"
+        android:pathData="M42,44h22v3H42zM42,51h22v3H42zM42,58h15v3H42z" />
+    <path
+        android:fillColor="@color/icon_accent"
+        android:pathData="M60,34h7v18l-3.5,-3 -3.5,3z" />
+</vector>
