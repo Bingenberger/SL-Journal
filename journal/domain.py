@@ -160,6 +160,23 @@ def save_attachment(entry_id, name, content, mime):
     get_db().execute('INSERT INTO attachments(entry_id,name,path,mime,size) VALUES(?,?,?,?,?)',(entry_id,name,path,mime or 'application/octet-stream',len(content)))
 
 
+VOICE_FORMATS = {'audio/webm':'webm','audio/ogg':'ogg','audio/mp4':'m4a'}
+
+
+def save_voice(upload):
+    """Sprachi: Aufnahme als Journaleintrag von jetzt mit verschlüsseltem Audioanhang.
+    Browser und Android-App nutzen denselben Weg."""
+    if not upload or upload.mimetype not in VOICE_FORMATS:
+        raise ValueError('Bitte eine Audioaufnahme aufnehmen.')
+    content=upload.read(25*1024*1024+1)
+    if not content or len(content)>25*1024*1024:
+        raise ValueError('Die Aufnahme muss zwischen 1 Byte und 25 MB groß sein.')
+    stamp=now()
+    eid=save_entry(dict(type='journal',date=stamp.date().isoformat(),time=stamp.strftime('%H:%M'),title='Sprachi · '+stamp.strftime('%d.%m.%Y · %H:%M'),body=''))
+    save_attachment(eid,'Sprachi-'+stamp.strftime('%Y-%m-%d-%H%M%S')+'.'+VOICE_FORMATS[upload.mimetype],content,upload.mimetype)
+    return eid,stamp
+
+
 def process_due(process, day):
     year = int(school_year(day).split('/')[0]) + (1 if process['month'] < 8 else 0)
     start = {'early':1,'middle':11,'late':21}[process['period']]

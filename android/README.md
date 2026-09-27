@@ -2,6 +2,7 @@
 
 Begleit-App zum Schulleitungsjournal. Sie verbindet sich mit Ihrer eigenen Journal-Instanz und macht die häufigsten Handgriffe unterwegs möglich:
 
+- **Sprachi:** Mikrofon-Knopf auf „Heute“ und „Einträge“ oder direkt vom Startbildschirm (lange auf das App-Symbol drücken › *Sprachi*). Aufnehmen (höchstens 10 Minuten), anhören, im Tagesjournal speichern – wie im Browser als Journaleintrag „Sprachi · Datum · Uhrzeit“ mit verschlüsseltem Audioanhang. Sprachis lassen sich in der Eintragsansicht direkt abspielen, auch die im Browser aufgenommenen.
 - **Heute:** Tagesübersicht mit Terminen, Einträgen des Tages, fälligen Aufgaben und Wiedervorlagen; vor- und zurückblättern oder ein Datum wählen. Ein Schnellfeld schreibt direkt ins Tagesjournal.
 - **Einträge:** Volltextsuche, Filter nach Typ und Posteingang, Detailansicht mit Markdown-Text, Aufgaben und Anhängen.
 - **Neuer Eintrag / Bearbeiten:** alle Eintragstypen, Datum und Uhrzeit, Beteiligte, Projekte, Vorgänge und Tags mit derselben Autovervollständigung wie im Browser (neue Namen werden dort als Vorschlag gesammelt), neue Aufgaben, Fotos von der Kamera und Dateien als Anhang.
@@ -40,7 +41,8 @@ Verwendet das Journal ein Zertifikat einer eigenen Zertifizierungsstelle (Schul-
 - Danach erhält das Gerät ein eigenes **Gerätetoken**. Der Server speichert nur dessen SHA-256-Wert. In der App liegt das Token AES-verschlüsselt, der Schlüssel im Android-Keystore. Datensicherung und Geräteübertragung sind für die App abgeschaltet.
 - Tokens verfallen nach **90 Tagen ohne Nutzung** und sofort, wenn die Sitzungsversion des Kontos wechselt.
 - Im Journal unter **Einstellungen › Angemeldete Geräte** sehen Sie alle Geräte mit letzter Nutzung und können jedes einzeln abmelden – etwa bei Verlust.
-- Anhänge werden nur zum Öffnen im App-Cache abgelegt und beim nächsten Öffnen ersetzt.
+- Anhänge werden nur zum Öffnen im App-Cache abgelegt und beim nächsten Öffnen ersetzt; Sprachis nur für die Dauer der Wiedergabe.
+- Das Mikrofon wird erst bei der ersten Sprachi-Aufnahme angefragt. Die Aufnahme liegt bis zum Speichern im App-Cache und wird danach oder beim Verwerfen gelöscht.
 
 ## Bauen
 

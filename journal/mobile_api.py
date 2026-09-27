@@ -316,6 +316,16 @@ def attachment_upload(eid):
     return ok(entry_full(load_entry(eid)), 201)
 
 
+@bp.post('/voice')
+def voice():
+    """Sprachi aus der App: wie im Browser ein Journaleintrag von jetzt."""
+    from .domain import save_voice
+    get_db().execute('BEGIN IMMEDIATE')
+    eid, _ = save_voice(request.files.get('audio'))
+    get_db().commit()
+    return ok(entry_full(load_entry(eid)), 201)
+
+
 @bp.get('/attachments/<int:aid>')
 def attachment_download(aid):
     import io

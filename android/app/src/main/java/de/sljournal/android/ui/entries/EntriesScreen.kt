@@ -54,6 +54,7 @@ import de.sljournal.android.data.Entry
 import de.sljournal.android.ui.components.EmptyHint
 import de.sljournal.android.ui.components.EntryCard
 import de.sljournal.android.ui.components.ErrorState
+import de.sljournal.android.ui.voice.CaptureButtons
 import kotlinx.coroutines.delay
 
 /**
@@ -62,7 +63,7 @@ import kotlinx.coroutines.delay
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun EntriesScreen(app: AppViewModel, onNewEntry: () -> Unit, onEdit: (Entry) -> Unit) {
+fun EntriesScreen(app: AppViewModel, onNewEntry: () -> Unit, onEdit: (Entry) -> Unit, onVoice: () -> Unit) {
     val navigator = rememberListDetailPaneScaffoldNavigator<Int>()
     BackHandler(navigator.canNavigateBack()) { navigator.navigateBack() }
     val selected = navigator.currentDestination?.content
@@ -79,6 +80,7 @@ fun EntriesScreen(app: AppViewModel, onNewEntry: () -> Unit, onEdit: (Entry) -> 
                     selected = if (detailVisible) selected else null,
                     onSelect = { navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it) },
                     onNewEntry = onNewEntry,
+                    onVoice = onVoice,
                 )
             }
         },
@@ -98,7 +100,7 @@ fun EntriesScreen(app: AppViewModel, onNewEntry: () -> Unit, onEdit: (Entry) -> 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EntryList(app: AppViewModel, selected: Int?, onSelect: (Int) -> Unit, onNewEntry: () -> Unit) {
+private fun EntryList(app: AppViewModel, selected: Int?, onSelect: (Int) -> Unit, onNewEntry: () -> Unit, onVoice: () -> Unit) {
     val revision by app.revision.collectAsState()
     val me by app.me.collectAsState()
     var query by rememberSaveable { mutableStateOf("") }
@@ -148,9 +150,7 @@ private fun EntryList(app: AppViewModel, selected: Int?, onSelect: (Int) -> Unit
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Einträge") }) },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(onClick = onNewEntry, icon = { Icon(Icons.Outlined.Add, null) }, text = { Text("Neuer Eintrag") })
-        },
+        floatingActionButton = { CaptureButtons(onVoice = onVoice, onNewEntry = onNewEntry) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             OutlinedTextField(

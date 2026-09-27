@@ -18,14 +18,21 @@ import de.sljournal.android.ui.theme.JournalTheme
 class MainActivity : ComponentActivity() {
     private val app: AppViewModel by viewModels()
     private var shared by mutableStateOf<EditorRequest?>(null)
+    private var voice by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (savedInstanceState == null) shared = sharedContent(intent)
+        if (savedInstanceState == null) {
+            shared = sharedContent(intent)
+            voice = intent?.action == ACTION_VOICE
+        }
         setContent {
             JournalTheme {
-                JournalRoot(app, shared, onSharedConsumed = { shared = null })
+                JournalRoot(
+                    app, shared, onSharedConsumed = { shared = null },
+                    voiceRequested = voice, onVoiceConsumed = { voice = false },
+                )
             }
         }
     }
@@ -33,6 +40,12 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         sharedContent(intent)?.let { shared = it }
+        if (intent.action == ACTION_VOICE) voice = true
+    }
+
+    companion object {
+        /** App-Verknüpfung „Sprachi“ (res/xml/shortcuts.xml). */
+        const val ACTION_VOICE = "de.sljournal.android.action.VOICE"
     }
 
     /** Text, Links, Fotos oder Dateien, die aus einer anderen App geteilt wurden. */

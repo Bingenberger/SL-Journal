@@ -68,6 +68,7 @@ import de.sljournal.android.ui.components.longDate
 import de.sljournal.android.ui.components.rememberLoader
 import de.sljournal.android.ui.components.shortDate
 import de.sljournal.android.ui.components.weekdayShort
+import de.sljournal.android.ui.voice.CaptureButtons
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -81,7 +82,7 @@ import java.time.format.DateTimeFormatter
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TodayScreen(app: AppViewModel, onOpenEntry: (Int) -> Unit, onNewEntry: (date: String) -> Unit) {
+fun TodayScreen(app: AppViewModel, onOpenEntry: (Int) -> Unit, onNewEntry: (date: String) -> Unit, onVoice: () -> Unit) {
     val me by app.me.collectAsState()
     var date by rememberSaveable { mutableStateOf<String?>(null) }
     val loader = rememberLoader(app, date) { it.day(date) }
@@ -118,13 +119,7 @@ fun TodayScreen(app: AppViewModel, onOpenEntry: (Int) -> Unit, onNewEntry: (date
                 },
             )
         },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { onNewEntry(shown) },
-                icon = { Icon(Icons.Outlined.Add, null) },
-                text = { Text("Neuer Eintrag") },
-            )
-        },
+        floatingActionButton = { CaptureButtons(onVoice = onVoice, onNewEntry = { onNewEntry(shown) }) },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {

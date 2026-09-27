@@ -121,6 +121,14 @@ class JournalApi(private val server: HttpUrl, private val token: String?) {
         return json.decodeFromString(call("POST", "entries/$entryId/attachments", body = body))
     }
 
+    /** Sprachi: Aufnahme als Journaleintrag von jetzt speichern (wie im Browser). */
+    suspend fun voice(bytes: ByteArray, mime: String = "audio/mp4"): Entry {
+        val body = MultipartBody.Builder().setType(MultipartBody.FORM)
+            .addFormDataPart("audio", "Sprachi", bytes.toRequestBody(mime.toMediaType()))
+            .build()
+        return json.decodeFromString(call("POST", "voice", body = body))
+    }
+
     /** Anhang herunterladen; der Server schickt die entschlüsselte Datei. */
     suspend fun download(attachmentId: Int): ByteArray = withContext(Dispatchers.IO) {
         val request = Request.Builder().url(url("api/v1/attachments/$attachmentId"))
