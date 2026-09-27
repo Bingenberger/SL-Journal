@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Nur HTTPS. Neben den Systemzertifikaten werden auch vom Nutzer installierte
+  Zertifizierungsstellen akzeptiert: So funktioniert ein Journal mit eigenem
+  Schul- oder VPN-Zertifikat, sobald dessen CA auf dem Gerät eingerichtet ist
+  (Einstellungen › Sicherheit › Verschlüsselung › Zertifikat installieren).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
