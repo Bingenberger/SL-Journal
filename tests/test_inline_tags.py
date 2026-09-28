@@ -1,6 +1,6 @@
 """#Tags im Fließtext und das Feld „Gleiche Tags“ am Eintrag."""
 from journal.db import get_db, one
-from journal.domain import save_entry, save_task
+from journal.domain import entry_details, save_entry, save_task
 from journal.tags import inline_tags, merge_tags, verwandte
 
 
@@ -61,7 +61,7 @@ def test_gleiche_tags_gruppiert_je_tag(app):
         anlegen('Dienstbesprechung', '2026-09-22', 'Organisation')
         anlegen('Ohne Bezug', '2026-09-24', 'Kollegium')
         get_db().commit()
-        gruppen = verwandte(one('SELECT * FROM entries WHERE id=?', (eid,)))
+        gruppen = verwandte(entry_details(one('SELECT * FROM entries WHERE id=?', (eid,))))['tags']
         assert [g['name'] for g in gruppen] == ['Schulfest', 'Organisation']
         fest = gruppen[0]
         assert fest['gesamt'] == 6 and len(fest['eintraege']) == 5, 'höchstens fünf je Tag'
@@ -76,7 +76,7 @@ def test_feld_erscheint_nur_bei_treffern(app, client):
         get_db().commit()
     for eid in (allein, ohne):
         seite = client.get(f'/entry/{eid}', base_url='https://localhost').get_data(as_text=True)
-        assert 'Gleiche Tags' not in seite
+        assert 'Verwandte Einträge' not in seite
 
 
 def test_feld_verlinkt_die_vollstaendige_liste(app, client):
@@ -86,6 +86,46 @@ def test_feld_verlinkt_die_vollstaendige_liste(app, client):
             anlegen(f'Fest {n}', f'2026-09-{10+n:02d}', 'Schulfest')
         get_db().commit()
     seite = client.get(f'/entry/{eid}', base_url='https://localhost').get_data(as_text=True)
-    assert 'Gleiche Tags' in seite
+    assert 'Verwandte Einträge' in seite
     assert 'Alle 6 ansehen' in seite
     assert 'tag=Schulfest' in seite
+
+
+def test_umschalter_nur_bei_mehreren_arten(app, client):
+    with app.app_context():
+        db = get_db()
+        pid = db.execute("INSERT INTO projects(name,school_year) VALUES('Schulfest','2026/27')").lastrowid
+        eid = anlegen('Abstimmung', '2026-09-25', 'Schulfest')
+        weiterer = anlegen('Planung', '2026-09-20', 'Schulfest')
+        for e in (eid, weiterer):
+            db.execute('INSERT INTO entry_projects VALUES(?,?)', (e, pid))
+        allein = anlegen('Nur Tag', '2026-09-24', 'Schulfest')
+        db.commit()
+        gruppen = verwandte(entry_details(one('SELECT * FROM entries WHERE id=?', (eid,))))
+        assert [g['name'] for g in gruppen['tags']] == ['Schulfest']
+        assert [g['name'] for g in gruppen['projects']] == ['Schulfest']
+        assert gruppen['cases'] == []
+    seite = client.get(f'/entry/{eid}', base_url='https://localhost').get_data(as_text=True)
+    assert 'data-relation="tags"' in seite and 'data-relation="projects"' in seite
+    assert 'data-relation="cases"' not in seite, 'ohne Vorgang keine Schaltfläche'
+    # Ein Eintrag mit nur einer Art bekommt gar keinen Umschalter.
+    seite = client.get(f'/entry/{allein}', base_url='https://localhost').get_data(as_text=True)
+    assert 'Verwandte Einträge' in seite and 'relation-switch' not in seite
+
+
+def test_vorgang_gruppiert_und_verlinkt(app, client):
+    with app.app_context():
+        db = get_db()
+        cid = db.execute("INSERT INTO cases(title,status) VALUES('Betreuung klären','open')").lastrowid
+        eid = anlegen('Erstes Gespräch', '2026-09-25', '')
+        for titel, datum in [('Rückruf Schulamt', '2026-09-22'), ('Elterngespräch', '2026-09-18')]:
+            db.execute('INSERT INTO entry_cases VALUES(?,?)', (anlegen(titel, datum, ''), cid))
+        db.execute('INSERT INTO entry_cases VALUES(?,?)', (eid, cid))
+        db.commit()
+        gruppen = verwandte(entry_details(one('SELECT * FROM entries WHERE id=?', (eid,))))
+        assert gruppen['tags'] == []
+        vorgang = gruppen['cases'][0]
+        assert vorgang['name'] == 'Betreuung klären' and vorgang['gesamt'] == 2
+        assert [e['title'] for e in vorgang['eintraege']] == ['Rückruf Schulamt', 'Elterngespräch']
+    seite = client.get(f'/entry/{eid}', base_url='https://localhost').get_data(as_text=True)
+    assert f'/case/{cid}' in seite

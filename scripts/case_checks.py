@@ -69,5 +69,29 @@ def check_cases(page,app,output):
         for path in ['/cases',f'/case/{cid}','/entries?inbox=1']:
             page.goto(origin+path)
             assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),path
+    # Verwandte Einträge: Umschalter zwischen Tags, Vorgang und Projekt.
     page.set_viewport_size({'width':1440,'height':1100})
+    with app.app_context():
+        db=get_db()
+        eid=db.execute("INSERT INTO entries(date,type,title,tags,body) VALUES('2026-09-25','meeting','Erstes Gespräch','Betreuung','')").lastrowid
+        zweiter=db.execute("INSERT INTO entries(date,type,title,tags,body) VALUES('2026-09-22','phone','Rückruf Schulamt','','')").lastrowid
+        dritter=db.execute("INSERT INTO entries(date,type,title,tags,body) VALUES('2026-09-20','note','Notiz zum Thema','Betreuung','')").lastrowid
+        for e in (eid,zweiter):
+            db.execute('INSERT INTO entry_cases VALUES(?,?)',(e,cid))
+        db.commit()
+    page.goto(origin+f'/entry/{eid}')
+    panel=page.locator('.relation-panel')
+    expect(panel).to_be_visible()
+    expect(panel.locator('[data-relation-panel=tags]')).to_be_visible()
+    expect(panel).to_contain_text('Notiz zum Thema')
+    panel.get_by_role('button',name='Vorgänge').click()
+    expect(panel.locator('[data-relation-panel=cases]')).to_be_visible()
+    expect(panel.locator('[data-relation-panel=tags]')).not_to_be_visible()
+    expect(panel).to_contain_text('Rückruf Schulamt')
+    # Die Wahl überlebt den Seitenwechsel.
+    page.reload()
+    expect(page.locator('.relation-panel [data-relation-panel=cases]')).to_be_visible()
+    # Ein Eintrag ohne Vorgang fällt auf die erste vorhandene Art zurück.
+    page.goto(origin+f'/entry/{dritter}')
+    expect(page.locator('.relation-panel [data-relation-panel=tags]')).to_be_visible()
     page.goto(origin+'/')

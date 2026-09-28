@@ -104,14 +104,25 @@ def markdown_extension():
     return Tags()
 
 
-def verwandte(entry, je_tag=5):
-    """Andere Einträge je Tag dieses Eintrags – neueste zuerst.
+def verwandte(entry, je_gruppe=5):
+    """Andere Einträge, die mit diesem etwas teilen – nach Tag, Vorgang, Projekt.
 
-    Gruppiert nach Tag statt zu einer flachen Liste vermischt: Ein Eintrag
-    trägt oft mehrere Tags, und beim Lesen verfolgt man einen davon.
+    Gruppiert statt vermischt: Ein Eintrag trägt oft mehrere Tags und gehört zu
+    mehreren Vorhaben; beim Lesen verfolgt man einen Faden davon.
     """
     from .db import one, rows
-    gruppen = []
+    SPALTEN = 'e.id,e.title,e.date,e.type'
+    ORDNUNG = ' ORDER BY e.date DESC,e.time DESC,e.id DESC LIMIT ?'
+
+    def gruppe(name, bedingung, wert, route, kwargs):
+        treffer = rows(f'SELECT {SPALTEN} FROM entries e {bedingung} AND e.id<>?' + ORDNUNG,
+                       (wert, entry['id'], je_gruppe))
+        if not treffer:
+            return None
+        gesamt = one(f'SELECT count(*) n FROM entries e {bedingung} AND e.id<>?', (wert, entry['id']))['n']
+        return dict(name=name, eintraege=treffer, gesamt=gesamt, route=route, kwargs=kwargs)
+
+    von_tags = []
     gesehen = set()
     for label in (entry['tags'] or '').split(','):
         label = label.strip()
@@ -119,11 +130,17 @@ def verwandte(entry, je_tag=5):
         if not key or key in gesehen:
             continue
         gesehen.add(key)
-        treffer = rows('SELECT id,title,date,type FROM entries WHERE id<>? AND has_tag(tags,?) '
-                       'ORDER BY date DESC,time DESC,id DESC LIMIT ?', (entry['id'], label, je_tag))
-        if not treffer:
-            continue
-        gesamt = one('SELECT count(*) n FROM entries WHERE id<>? AND has_tag(tags,?)',
-                     (entry['id'], label))['n']
-        gruppen.append(dict(name=label, eintraege=treffer, gesamt=gesamt))
-    return gruppen
+        gefunden = gruppe(label, 'WHERE has_tag(e.tags,?)', label, 'entry_list', dict(tag=label))
+        if gefunden:
+            von_tags.append(gefunden)
+
+    def ueber(tabelle, schluessel, posten, name_feld, route, kwarg):
+        gefunden = (gruppe(posten_eintrag[name_feld],
+                           f'JOIN {tabelle} v ON v.entry_id=e.id WHERE v.{schluessel}=?',
+                           posten_eintrag['id'], route, {kwarg: posten_eintrag['id']})
+                    for posten_eintrag in posten)
+        return [g for g in gefunden if g]
+
+    return dict(tags=von_tags,
+                cases=ueber('entry_cases', 'case_id', entry.get('cases') or [], 'title', 'case_view', 'cid'),
+                projects=ueber('entry_projects', 'project_id', entry.get('projects') or [], 'name', 'project_view', 'pid'))

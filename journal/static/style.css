@@ -552,3 +552,6 @@ body.sidebar-collapsed .profile form{margin:0}
 .inline-tag{color:var(--teal);font-weight:550}
 .inline-tag:hover{text-decoration:underline}
 @media(max-width:700px){.tag-relation{padding:0 18px 12px}.tag-relation-item .type-label{display:none}}
+.relation-panel .panel-heading{flex-wrap:wrap;gap:8px}
+.relation-switch{margin:0;flex:none;max-width:100%}
+.relation-switch button{padding:3px 9px;white-space:nowrap}

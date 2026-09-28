@@ -45,6 +45,28 @@
         +'; path=/; max-age=31536000; samesite=strict'+(location.protocol==='https:'?'; secure':'');
     });
   }
+  // Verwandte Einträge: Tags, Vorgang oder Projekt. Die Wahl gilt geräteweit,
+  // fällt aber auf die erste vorhandene Art zurück – nicht jeder Eintrag hat
+  // einen Vorgang, und ein leeres Feld wäre schlechter als das falsche.
+  const verwandte=document.querySelector('[data-relations]');
+  if(verwandte){
+    const schalter=[...verwandte.querySelectorAll('[data-relation]')];
+    const flaechen=[...verwandte.querySelectorAll('[data-relation-panel]')];
+    const speicher='journal-relation';
+    const zeige=art=>{
+      const gewaehlt=flaechen.some(f=>f.dataset.relationPanel===art)?art:flaechen[0]?.dataset.relationPanel;
+      flaechen.forEach(f=>f.hidden=f.dataset.relationPanel!==gewaehlt);
+      schalter.forEach(s=>s.setAttribute('aria-pressed',String(s.dataset.relation===gewaehlt)));
+      return gewaehlt;
+    };
+    let art=flaechen[0]?.dataset.relationPanel;
+    try{art=localStorage.getItem(speicher)||art;}catch{}
+    zeige(art);
+    for(const knopf of schalter) knopf.addEventListener('click',()=>{
+      const gewaehlt=zeige(knopf.dataset.relation);
+      try{localStorage.setItem(speicher,gewaehlt);}catch{}
+    });
+  }
   const snapshots=new WeakMap();
   function snapshot(form) {
     // Do not construct FormData here: autocomplete uses that event when saving.

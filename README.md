@@ -145,7 +145,9 @@ Unteraufgaben übernehmen die Tags der Hauptaufgabe, solange keine eigenen geset
 
 Erkannt wird `#` gefolgt von einem Buchstaben. Nicht erkannt werden `#1`, Anker in Adressen (`…/seite#stelle`), `#tag` innerhalb eines Wortes und alles in Code-Abschnitten. **Eine Markdown-Überschrift braucht dafür jetzt das Leerzeichen** — `# Titel` bleibt eine Überschrift, `#Titel` ist ein Tag. Die Werkzeugleiste des Editors setzt das Leerzeichen ohnehin.
 
-**Gleiche Tags am Eintrag.** Unter den Dokumenten steht auf jeder Eintragsseite ein Feld mit anderen Einträgen, die dieselben Tags tragen — nach Tag gruppiert, nicht zu einer Liste vermischt. Ein Eintrag trägt oft mehrere Tags, und beim Lesen verfolgt man einen davon. Je Tag die fünf jüngsten Einträge mit Datum und Art, darunter der Weg zur vollständigen Liste. Ohne Treffer erscheint das Feld nicht.
+**Verwandte Einträge.** Unter den Dokumenten steht auf jeder Eintragsseite ein Feld mit anderen Einträgen, die mit diesem etwas teilen. In der Titelzeile schaltet es zwischen **Tags**, **Vorgängen** und **Projekten** um; angeboten wird nur, wozu es auch Einträge gibt, und bei nur einer Art entfällt der Umschalter. Die Wahl merkt sich der Browser und fällt auf die erste vorhandene Art zurück, wenn der nächste Eintrag etwa keinen Vorgang hat.
+
+Innerhalb einer Art wird gruppiert statt vermischt — je Tag, je Vorgang, je Projekt eine eigene kurze Liste. Ein Eintrag trägt oft mehrere Tags und gehört zu mehreren Vorhaben; beim Lesen verfolgt man einen Faden davon. Je Gruppe die fünf jüngsten Einträge mit Datum und Art, darunter der Weg zur vollständigen Liste.
 
 Die Tagübersicht zählt beides getrennt („3 Einträge · 2 Aufgaben") und führt mit je einem Verweis in die passende Liste. Die Aufgabenliste filtert über `?tag=`; Groß- und Kleinschreibung spielt dabei keine Rolle.
 
