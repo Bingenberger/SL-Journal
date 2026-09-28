@@ -77,6 +77,13 @@ def check_task_groups(page,app,output):
     expect(page.locator('.task-row')).to_have_count(1)
     assert 'tag=Schulfest' in page.url, page.url
     page.goto(origin+'/tasks?filter=all')
+    # #Tag im Aufgabentext wird beim Speichern übernommen.
+    page.get_by_role('button',name='Aufgabe',exact=True).first.click()
+    task.locator('[name=text]').fill('Bühne für #Sommerfest bestellen')
+    task.get_by_role('button',name='Aufgabe speichern',exact=True).click()
+    expect(task).not_to_be_visible()
+    zeile=page.locator('.task-row',has_text='Bühne für #Sommerfest bestellen')
+    expect(zeile.locator('.task-meta')).to_contain_text('Sommerfest')
     page.set_viewport_size({'width':390,'height':844})
     assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
     page.screenshot(path=str(output/'subtasks-mobile.png'),full_page=True)

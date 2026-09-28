@@ -537,3 +537,18 @@ body.sidebar-collapsed .profile form{margin:0}
 .device-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 0;border-top:1px solid var(--line)}
 .device-row>div{display:flex;flex-direction:column;min-width:0;overflow-wrap:anywhere}
 #devices{margin-bottom:22px}
+
+/* „Gleiche Tags“ am Eintrag: je Tag eine kurze Liste statt einer Mischung */
+.tag-relation{padding:0 23px 14px;border-top:1px solid #f0f3f3}
+.tag-relation:first-of-type{border-top:0}
+.tag-relation-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0 7px}
+.tag-relation-head .muted{white-space:nowrap;font-size:10px}
+.tag-relation-item{display:flex;align-items:baseline;gap:9px;padding:6px 0;font-size:12px;min-width:0}
+.tag-relation-item:hover .tag-relation-title{color:var(--teal)}
+.tag-relation-date{flex:none;width:62px;font-size:10px;color:#9dabad}
+.tag-relation-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag-relation-item .type-label{flex:none;font-size:9px}
+.tag-relation-more{margin-top:6px}
+.inline-tag{color:var(--teal);font-weight:550}
+.inline-tag:hover{text-decoration:underline}
+@media(max-width:700px){.tag-relation{padding:0 18px 12px}.tag-relation-item .type-label{display:none}}

@@ -73,8 +73,9 @@ def create_app(test_config=None):
 
     @app.template_filter('md')
     def render_markdown(text):
-        html = markdown.markdown(text or '', extensions=['fenced_code','tables','nl2br'])
-        return Markup(bleach.clean(html, tags={'p','br','strong','em','ul','ol','li','blockquote','code','pre','h1','h2','h3','h4','hr','a','table','thead','tbody','tr','th','td','del'}, attributes={'a':['href','title']}, protocols=['https','http','mailto'], strip=True))
+        from .tags import markdown_extension
+        html = markdown.markdown(text or '', extensions=['fenced_code','tables','nl2br',markdown_extension()])
+        return Markup(bleach.clean(html, tags={'p','br','strong','em','ul','ol','li','blockquote','code','pre','h1','h2','h3','h4','hr','a','table','thead','tbody','tr','th','td','del'}, attributes={'a':['href','title','class']}, protocols=['https','http','mailto'], strip=True))
 
     @app.template_filter('mail_names')
     def mail_names(value, limit=2):
@@ -314,7 +315,8 @@ def create_app(test_config=None):
         from .entry_links import listed, incoming
         entry['resource_links'] = listed(eid)
         entry['related_entries'] = incoming(eid)
-        return render_template('entry.html',entry=entry,meeting=one('SELECT * FROM calendar_events WHERE protocol_entry_id=?',(eid,)),tasks=rows('SELECT t.*,p.name project_name FROM tasks t LEFT JOIN projects p ON p.id=t.project_id WHERE entry_id=? OR t.id IN (SELECT mp.task_id FROM meeting_points mp JOIN calendar_events ce ON ce.id=mp.event_id WHERE ce.protocol_entry_id=?) ORDER BY done,due',(eid,eid)))
+        from .tags import verwandte
+        return render_template('entry.html',entry=entry,tag_groups=verwandte(entry),meeting=one('SELECT * FROM calendar_events WHERE protocol_entry_id=?',(eid,)),tasks=rows('SELECT t.*,p.name project_name FROM tasks t LEFT JOIN projects p ON p.id=t.project_id WHERE entry_id=? OR t.id IN (SELECT mp.task_id FROM meeting_points mp JOIN calendar_events ce ON ce.id=mp.event_id WHERE ce.protocol_entry_id=?) ORDER BY done,due',(eid,eid)))
 
     @app.get('/api/entry/<int:eid>')
     def entry_json(eid):

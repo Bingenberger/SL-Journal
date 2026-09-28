@@ -61,6 +61,7 @@ def entries(sql='SELECT * FROM entries ORDER BY date DESC,time DESC,id DESC', pa
 
 
 def save_entry(data, project_ids=(), person_ids=(), entry_id=None):
+    from .tags import merge_tags
     title = data.get('title', '').strip()
     if not title:
         raise ValueError('Ein Titel fehlt noch.')
@@ -74,7 +75,7 @@ def save_entry(data, project_ids=(), person_ids=(), entry_id=None):
             datetime.strptime(time, '%H:%M')
         except ValueError:
             raise ValueError('Bitte eine gültige Uhrzeit eingeben.')
-    values = (entry_date,time,kind,title,data.get('body',''),data.get('participants',''),data.get('sender',''),data.get('recipients',''),clean_tags(data.get('tags','')),int(bool(data.get('needs_review',False))))
+    values = (entry_date,time,kind,title,data.get('body',''),data.get('participants',''),data.get('sender',''),data.get('recipients',''),merge_tags(data.get('tags',''),data.get('body',''),data.get('agenda',''),data.get('decisions','')),int(bool(data.get('needs_review',False))))
     db = get_db()
     if entry_id:
         db.execute('UPDATE entries SET date=?,time=?,type=?,title=?,body=?,participants=?,sender=?,recipients=?,tags=?,needs_review=? WHERE id=?', (*values,entry_id))
@@ -94,6 +95,7 @@ def save_entry(data, project_ids=(), person_ids=(), entry_id=None):
 
 
 def save_task(data, task_id=None):
+    from .tags import merge_tags
     text = data.get('text','').strip()
     if not text:
         raise ValueError('Der Aufgabentext fehlt noch.')
@@ -108,7 +110,7 @@ def save_task(data, task_id=None):
         if task_id and one('SELECT id FROM tasks WHERE parent_id=?',(task_id,)):
             raise ValueError('Eine Hauptaufgabe mit Unteraufgaben kann nicht selbst Unteraufgabe werden.')
     # Unteraufgaben erben Tags wie Projekt und Vorgang, solange keine eigenen gesetzt sind.
-    tags = clean_tags(data.get('tags','')) or (parent['tags'] if parent else '')
+    tags = merge_tags(data.get('tags',''),text) or (parent['tags'] if parent else '')
     pid = data.get('project_id') or (parent['project_id'] if parent else None)
     eid = data.get('entry_id') or (parent['entry_id'] if parent else None)
     if eid:
