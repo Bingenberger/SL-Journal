@@ -96,8 +96,13 @@ function decorations(view) {
         if(labelEnd) {
           const destination=children.find(child=>child.name==='URL');
           const href=destination?doc.sliceString(destination.from,destination.to):'';
-          if(/^\/(?!\/)/.test(href)) {
-            ranges.push(Decoration.mark({tagName:'a',class:'md-link md-resource-link',attributes:{href,title:'Strg/Befehl + Klick öffnet die Ressource in einem neuen Tab'}}).range(from+1,labelEnd.from));
+          // Nur eigene Pfade und die drei harmlosen Schemata werden anklickbar –
+          // javascript: und Ähnliches bleiben schlichter Text.
+          const intern=/^\/(?!\/)/.test(href);
+          if(intern || /^(https?|mailto):/i.test(href)) {
+            ranges.push(Decoration.mark({tagName:'a',class:'md-link md-resource-link',attributes:{href,
+              title:intern?'Strg/Befehl + Klick öffnet die Ressource in einem neuen Tab'
+                          :'Strg/Befehl + Klick öffnet den Link in einem neuen Tab'}}).range(from+1,labelEnd.from));
           } else mark(from+1,labelEnd.from,'md-link');
           hide(from,from+1);
           // Reveal the destination when the cursor enters it, or use source mode.

@@ -66,4 +66,13 @@ def check_editor(page,app,output):
     body.press('Control+End')
     body.press_sequentially('Nachtrag',delay=3)
     expect(dialog.locator('[name=body]')).to_have_value(sample+'Nachtrag')
+    # Links im Editor: äußere wie eigene anklickbar, javascript: bleibt Text.
+    body.press('Control+a')
+    body.press_sequentially('[Schulamt](https://www.schulamt.example) und [Vorgang](/cases) und [Böse](javascript:alert(1))',delay=3)
+    body.press('Control+Home')
+    verweise=dialog.locator('a.md-resource-link')
+    expect(verweise).to_have_count(2)
+    expect(verweise.first).to_have_attribute('href','https://www.schulamt.example')
+    expect(verweise.nth(1)).to_have_attribute('href','/cases')
+    assert dialog.locator('a[href^="javascript"]').count()==0, 'javascript: darf nicht anklickbar werden'
     dialog.get_by_role('button',name='Abbrechen',exact=True).click()
