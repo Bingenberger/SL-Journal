@@ -72,6 +72,8 @@
 .ac-invalid .ac-box{border-color:var(--red)}
 .ac-invalid .ac-message{color:var(--red)}
 .journal-footer .autocomplete{flex:1;min-width:0}
+/* Der Hinweis rechts ist entfallen; die Schaltfläche hält selbst Abstand. */
+.journal-footer .button{margin-left:auto}
 .journal-footer .ac-box .ac-input{font-size:11px;min-width:95px}
 .journal-footer .ac-chip{font-size:10px}
 .journal-footer .ac-message{font-size:9px}
@@ -146,6 +148,7 @@ svg.search-icon{width:17px;height:17px;color:#929fa2}
 .sidebar-bottom>a{display:flex;align-items:center;gap:13px}
 
 .tag-card h2{display:flex;align-items:start;gap:8px}.tag-card h2 span{overflow-wrap:anywhere;min-width:0}.tag-card:hover{border-color:#8db9a8}.tag-card p{margin-bottom:10px}
+.tag-card-links{display:flex;flex-wrap:wrap;gap:16px}
 
 .type-protocol{color:#65548c;background:#f0ecf7}.protocol-section{margin:24px 0;padding-bottom:16px;border-bottom:1px solid var(--line)}
 

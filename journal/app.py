@@ -472,6 +472,10 @@ def create_app(test_config=None):
         for key in ('project_id','case_id'):
             value=request.args.get(key,type=int)
             if value: data=[t for t in data if t[key]==value]
+        tag=request.args.get('tag','').strip()
+        if tag:
+            from .tags import has_tag
+            data=[t for t in data if has_tag(t['tags'],tag)]
         due=request.args.get('due','')
         today=now().date()
         if due=='overdue': data=[t for t in data if t['due'] and t['due']<today.isoformat()]

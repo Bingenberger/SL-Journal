@@ -107,6 +107,8 @@ def save_task(data, task_id=None):
             raise ValueError('Bitte eine gültige Hauptaufgabe wählen. Unteraufgaben haben eine Ebene.')
         if task_id and one('SELECT id FROM tasks WHERE parent_id=?',(task_id,)):
             raise ValueError('Eine Hauptaufgabe mit Unteraufgaben kann nicht selbst Unteraufgabe werden.')
+    # Unteraufgaben erben Tags wie Projekt und Vorgang, solange keine eigenen gesetzt sind.
+    tags = clean_tags(data.get('tags','')) or (parent['tags'] if parent else '')
     pid = data.get('project_id') or (parent['project_id'] if parent else None)
     eid = data.get('entry_id') or (parent['entry_id'] if parent else None)
     if eid:
@@ -131,9 +133,9 @@ def save_task(data, task_id=None):
     if not selected and eid:
         selected = parse({'project_items': items('entry', eid)[:1]}, single=True)
     if task_id:
-        get_db().execute('UPDATE tasks SET text=?,due=?,project_id=?,entry_id=? WHERE id=?',(text,due,pid,eid,task_id))
+        get_db().execute('UPDATE tasks SET text=?,due=?,project_id=?,entry_id=?,tags=? WHERE id=?',(text,due,pid,eid,tags,task_id))
     else:
-        task_id = get_db().execute('INSERT INTO tasks(text,due,project_id,entry_id) VALUES(?,?,?,?)',(text,due,pid,eid)).lastrowid
+        task_id = get_db().execute('INSERT INTO tasks(text,due,project_id,entry_id,tags) VALUES(?,?,?,?,?)',(text,due,pid,eid,tags)).lastrowid
     get_db().execute('UPDATE tasks SET parent_id=? WHERE id=?',(parent_id,task_id))
     if parent and not one('SELECT done FROM tasks WHERE id=?',(task_id,))['done']:
         get_db().execute('UPDATE tasks SET done=0,completed_at=NULL WHERE id=?',(parent_id,))

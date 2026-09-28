@@ -68,7 +68,8 @@ CREATE TABLE IF NOT EXISTS tasks (
  project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL,
  entry_id INTEGER REFERENCES entries(id) ON DELETE SET NULL, completed_at TEXT,
  parent_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
- case_id INTEGER REFERENCES cases(id) ON DELETE SET NULL);
+ case_id INTEGER REFERENCES cases(id) ON DELETE SET NULL,
+ tags TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS calendar_events (
  id INTEGER PRIMARY KEY, event_key TEXT NOT NULL UNIQUE,
  calendar_key TEXT NOT NULL, uid TEXT NOT NULL, occurrence TEXT NOT NULL DEFAULT '',
@@ -257,6 +258,8 @@ def init_db():
         get_db().execute("ALTER TABLE people ADD COLUMN institution TEXT NOT NULL DEFAULT ''")
     if 'parent_id' not in {column['name'] for column in get_db().execute('PRAGMA table_info(tasks)')}:
         get_db().execute('ALTER TABLE tasks ADD COLUMN parent_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL')
+    if 'tags' not in {column['name'] for column in get_db().execute('PRAGMA table_info(tasks)')}:
+        get_db().execute("ALTER TABLE tasks ADD COLUMN tags TEXT NOT NULL DEFAULT ''")
     get_db().execute('CREATE INDEX IF NOT EXISTS task_parent ON tasks(parent_id)')
     retire_collections(db)
     from .participants import migrate_participants

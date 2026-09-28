@@ -132,6 +132,17 @@ npm run build:editor
 
 Quellcode: `frontend/markdown-editor.js`. Abhängigkeiten sind über `package-lock.json` festgeschrieben; Lizenzhinweise liegen neben dem Bundle. Der Editor verwendet [CodeMirror-Dekorationen](https://codemirror.net/examples/decoration/). Die nötigen Styles erhalten einen pro Antwort erzeugten CSP-Nonce; `unsafe-inline` wird nicht freigeschaltet. Zwei Angaben setzt der Editor als Style-Attribut (`tab-size`, `pointer-events`); solche Attribute bleiben gesperrt, beide stehen stattdessen in `journal/static/style.css`. Die Browserprüfung sammelt CSP-Verstöße über alle Seiten hinweg und lässt nur diesen Fall durchgehen.
 
+### Tags vergeben
+
+Tags gibt es an Einträgen **und** an Aufgaben. Zwei Stellen sind auf schnelles Erfassen ausgelegt:
+
+* **Tagesjournal im Cockpit** — neben Projekt und Vorgang steht das Tagfeld in derselben Zeile. Der frühere Hinweis „Live-Formatierung" ist dafür entfallen; dieselbe Auskunft steht ohnehin unter dem Schreibfeld.
+* **Aufgabendialog** — die Zuordnungen stehen jetzt als zweispaltiges Raster: Projekt und Vorgang nebeneinander, Tags darunter über die volle Breite. Mit dem zusätzlichen Feld braucht der Block weniger Platz als vorher mit zweien.
+
+Unteraufgaben übernehmen die Tags der Hauptaufgabe, solange keine eigenen gesetzt sind — wie bei Projekt und Vorgang.
+
+Die Tagübersicht zählt beides getrennt („3 Einträge · 2 Aufgaben") und führt mit je einem Verweis in die passende Liste. Die Aufgabenliste filtert über `?tag=`; Groß- und Kleinschreibung spielt dabei keine Rolle.
+
 ## Symbole
 
 Die Oberfläche verwendet [Phosphor Icons](https://phosphoricons.com) (MIT). Aus dem Paket werden nur die tatsächlich benötigten Symbole in ein Sprite geschrieben und mit jeder Seite ausgeliefert – als eigene Datei brächte das nichts, weil alle Antworten `Cache-Control: no-store` tragen.

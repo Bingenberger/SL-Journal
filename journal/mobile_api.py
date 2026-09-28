@@ -161,6 +161,7 @@ def entry_full(entry):
 def task_json(task):
     case = one('SELECT id,title FROM cases WHERE id=?', (task['case_id'],)) if task.get('case_id') else None
     return dict(id=task['id'], text=task['text'], due=task['due'], done=bool(task['done']),
+                tags=task['tags'],
                 completed_at=task['completed_at'], parent_id=task['parent_id'], entry_id=task['entry_id'],
                 project=dict(id=task['project_id'], name=task.get('project_name') or '') if task['project_id'] else None,
                 case=case,
@@ -366,8 +367,9 @@ def task_payload(data, existing=None):
     if existing:
         # Nicht mitgeschickte Zuordnungen bleiben erhalten, auch Projektvorschläge.
         from .project_suggestions import items
-        result.update(text=existing['text'], due=existing['due'] or '', project_items=items('task', existing['id']))
-    for key in ('text', 'due'):
+        result.update(text=existing['text'], due=existing['due'] or '', tags=existing['tags'],
+                      project_items=items('task', existing['id']))
+    for key in ('text', 'due', 'tags'):
         if key in data:
             value = data[key] or ''
             if not isinstance(value, str):
