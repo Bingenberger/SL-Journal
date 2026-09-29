@@ -555,3 +555,9 @@ body.sidebar-collapsed .profile form{margin:0}
 .relation-panel .panel-heading{flex-wrap:wrap;gap:8px}
 .relation-switch{margin:0;flex:none;max-width:100%}
 .relation-switch button{padding:3px 9px;white-space:nowrap}
+/* Herkunft einer Aufgabe: Art farbig, Titel gekürzt, damit die Zeile nicht bricht */
+.task-origin{display:inline-flex;align-items:baseline;gap:5px;min-width:0;max-width:100%}
+.task-origin .type-label{flex:none;padding:1px 4px;border-radius:4px}
+.task-origin-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:24ch}
+.task-origin .icon{width:11px;height:11px;flex:none;align-self:center}
+@media(max-width:700px){.task-origin-title{max-width:18ch}}

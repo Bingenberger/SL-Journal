@@ -76,3 +76,21 @@ def test_schnelleingabe_und_dialog_bieten_das_feld_an(app, client):
     cockpit = client.get('/', base_url='https://localhost').get_data(as_text=True)
     assert 'data-label="Tags zum Journaleintrag"' in cockpit
     assert cockpit.count('data-autocomplete="tags"') >= 2, 'Journalfeld und Aufgabendialog'
+
+
+def test_herkunft_steht_an_der_aufgabe(app, client):
+    with app.app_context():
+        db = get_db()
+        prot = db.execute("INSERT INTO entries(date,type,title,body) "
+                          "VALUES('2026-09-28','protocol','Konferenz zur Vertretungsregelung','')").lastrowid
+        db.execute("INSERT INTO tasks(text,due,entry_id) VALUES('Vertretungsplan anpassen','2026-09-29',?)", (prot,))
+        db.execute("INSERT INTO tasks(text,due) VALUES('Ohne Herkunft','2026-09-29')")
+        db.commit()
+    for pfad in ('/?date=2026-09-29', '/tasks?filter=all'):
+        seite = client.get(pfad, base_url='https://localhost').get_data(as_text=True)
+        assert 'Konferenz zur Vertretungsregelung' in seite, pfad
+        assert 'type-protocol' in seite, pfad
+        assert 'Zum Eintrag' not in seite, pfad
+    # Auf der Seite des Eintrags selbst wäre die Herkunft nur Wiederholung.
+    seite = client.get(f'/entry/{prot}', base_url='https://localhost').get_data(as_text=True)
+    assert 'task-origin' not in seite

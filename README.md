@@ -480,6 +480,12 @@ Neue Namen in der Vorgangsauswahl werden beim Speichern als **Vorgangsvorschläg
 
 Vorschlagsbereiche lassen sich aufklappen, größere Listen werden seitenweise angezeigt. In Aufgaben können Text, Projekt, Vorgang und Fälligkeit gemeinsam gefiltert werden. Tags lassen sich direkt im Posteingang vergeben. Auf schmalen Bildschirmen öffnet „Menü“ die Navigation; das Cockpit zeigt Aufgaben und Wiedervorlagen zuerst. Dialoge haben eine feste Speicherleiste und warnen beim Verwerfen ungespeicherter Änderungen. Unteraufgaben befinden sich im Aktionsmenü der Hauptaufgabe. Details und Bildschirmbeispiele: [UI-Verbesserungen](docs/UI-VERBESSERUNGEN.md).
 
+### Herkunft einer Aufgabe
+
+Aufgaben, die aus einem Eintrag entstanden sind, nennen ihn unter dem Aufgabentext — mit der Art des Eintrags und seinem Titel, etwa **Protokoll · Konferenz zur Vertretungsregelung**. Vorher stand dort nur „Zum Eintrag", was zwar hinführte, aber nicht sagte, wohin. Der Titel wird gekürzt, wenn er zu lang wird; der vollständige steht im Tooltip.
+
+Die Angabe erscheint im Tagescockpit, in der Aufgabenliste, am Projekt und am Vorgang — nicht aber auf der Seite des Eintrags selbst, wo sie nur Wiederholung wäre.
+
 ### Wiederkehrende Aufgaben
 
 Unter **Aufgaben → Wiederkehrende Aufgaben → Neue Aufgabenserie** oder im Aufgabendialog unter **Wiederkehrende Aufgabe** lässt sich eine Serie anlegen. Unterstützt werden wöchentliche und monatliche Wiederholungen mit wählbarem Abstand, quartalsweise Wiederholungen sowie **einzelne feste Termine** (ein Datum im Format `JJJJ-MM-TT` je Zeile). Ein optionales Enddatum begrenzt die Serie. Bei monatlichen Terminen wird beispielsweise der 31. Januar zum letzten Februartag und anschließend wieder zum 31. März.
