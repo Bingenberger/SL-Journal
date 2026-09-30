@@ -24,7 +24,8 @@ def main():
     sub.add_parser('tasks',help='Fällige Aufgaben aus Serien bis 14 Tage im Voraus anlegen')
     sub.add_parser('sync',help='IMAP und CalDAV synchronisieren')
     calendar=sub.add_parser('calendar',help='Kalendercache für einen Zeitraum laden')
-    calendar.add_argument('--start',required=True);calendar.add_argument('--days',type=int,default=30)
+    calendar.add_argument('--start');calendar.add_argument('--days',type=int,default=30)
+    calendar.add_argument('--school-year',action='store_true',help='Das ganze laufende Schuljahr laden (1. August bis 31. Juli)')
     backup_cmd=sub.add_parser('backup',help='Verschlüsselte Sicherung erstellen')
     backup_cmd.add_argument('--destination',type=Path);backup_cmd.add_argument('--keep-days',type=int,default=30)
     restore_cmd=sub.add_parser('restore',help='In ein leeres Verzeichnis wiederherstellen')
@@ -82,9 +83,13 @@ def main():
             print(sync_all())
         elif args.command=='calendar':
             from datetime import date
-            from journal.integrations import sync_calendar
-            if not 1<=args.days<=366: raise ValueError('Zeitraum: 1 bis 366 Tage.')
-            print(sync_calendar(date.fromisoformat(args.start),args.days))
+            from journal.integrations import sync_calendar, sync_school_year
+            if args.school_year:
+                print(sync_school_year())
+            else:
+                if not args.start: raise ValueError('Bitte --start angeben oder --school-year verwenden.')
+                if not 1<=args.days<=366: raise ValueError('Zeitraum: 1 bis 366 Tage.')
+                print(sync_calendar(date.fromisoformat(args.start),args.days))
         elif args.command in ('backup','maintenance'):
             from journal.maintenance import backup,purge
             if args.command=='maintenance':
@@ -92,6 +97,12 @@ def main():
                 from journal.recurrence import generate
                 generate()
                 print(f'{len(purge(apply=True))} Einträge nach Löschfrist entfernt.');print(backup())
+                # Das ganze Schuljahr einmal täglich nachziehen. Ein Fehler hier
+                # darf die bereits erledigte Sicherung nicht nachträglich
+                # zunichtemachen, deshalb nur melden.
+                from journal.integrations import sync_school_year
+                try: print(sync_school_year()+' (Schuljahr)')
+                except Exception as fehler: print(f'Kalender des Schuljahres nicht geladen: {type(fehler).__name__}')
             else:
                 if args.keep_days<1: raise ValueError('Backupaufbewahrung mindestens 1 Tag.')
                 print(backup(args.destination,args.keep_days))

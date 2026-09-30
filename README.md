@@ -197,11 +197,25 @@ Dieselbe Verbindung dient dem Ansehen von Dokumenten (siehe unten). Beides liest
 
 Die Kalenderanbindung verwendet ausschließlich Kalenderabfragen. Serientermine werden server-/bibliotheksseitig aufgelöst; ganztägige und mehrtägige Termine werden auf den betreffenden Tagen dargestellt. Kalender haben unterschiedliche Farbmarkierungen und sichtbare Namen.
 
-Die automatische Synchronisierung lädt die letzten 7 und die nächsten 23 Tage. „Aktualisieren“ im Tagescockpit lädt gezielt den angezeigten Tag. Bereits geladene Termine bleiben bei Verbindungsproblemen als verschlüsselter Cache mit Zeitstempel nutzbar; Cachedateien älter als 60 Tage werden bei erfolgreicher Synchronisierung entfernt. Termine sind keine persistierten Journalentitäten.
+Geladen wird in zwei Rhythmen, weil beides zusammen nicht geht: Der Abgleich alle fünf Minuten soll kurz bleiben, der Kalender soll trotzdem weit reichen.
+
+| Lauf | Zeitraum |
+| --- | --- |
+| Alle fünf Minuten (`manage.py sync`) | 7 Tage rückwärts bis 22 Tage voraus |
+| Nächtliche Wartung (`manage.py maintenance`) | das ganze laufende Schuljahr, 1. August bis 31. Juli |
+| „Aktualisieren“ im Tagescockpit | nur der angezeigte Tag |
+| „Kalender aktualisieren“ auf der Terminvorbereitung | 90 Tage ab wählbarem Startdatum |
+
+Damit stehen Termine des ganzen Schuljahres zum Vormerken und Verknüpfen bereit, lange bevor sie in das schmale Fenster rutschen. Ein schmaler Lauf löscht nichts außerhalb seines Zeitraums: Als fehlend markiert werden nur Termine innerhalb des gerade gelesenen Fensters.
+
+Scheitert der Schuljahreslauf in der Wartung, wird das gemeldet, bricht aber weder Löschfristen noch Sicherung ab — die sind zu dem Zeitpunkt bereits erledigt.
 
 ```bash
+.venv/bin/python manage.py calendar --school-year          # ganzes Schuljahr sofort
 .venv/bin/python manage.py calendar --start 2026-09-01 --days 30
 ```
+
+Bereits geladene Termine bleiben bei Verbindungsproblemen als verschlüsselter Cache mit Zeitstempel nutzbar; Cachedateien älter als 60 Tage werden bei erfolgreicher Synchronisierung entfernt. Termine sind keine persistierten Journalentitäten.
 
 Live-IMAP und eine echte Nextcloud müssen mit den eigenen Zugangsdaten abschließend geprüft werden. Automatisierte Integrationstests verwenden Beispieldaten und einen simulierten CalDAV-Serverzugriff.
 

@@ -304,10 +304,15 @@ def sync_calendar(start=None,days=30):
                     occurrence=occurrence_key(rid.dt if rid else event_start if component.get('RRULE') else None)
                     stable_key=event_key(calendar_key,uid,occurrence)
                     durable.append(dict(calendar_key=calendar_key,uid=uid,occurrence=occurrence,title=str(component.get('SUMMARY','Ohne Titel')),calendar=name,location=str(component.get('LOCATION','')),start_at=event_start.isoformat(),end_at=event_end.isoformat(),date=event_start.date().isoformat(),time='' if all_day else event_start.strftime('%H:%M'),all_day=int(all_day),color=index%5))
-                    for key,bucket in buckets.items():
-                        day_begin=datetime.combine(date.fromisoformat(key),time.min,TZ)
-                        if event_start < day_begin+timedelta(days=1) and event_end > day_begin:
-                            bucket.append(dict(event_key=stable_key,title=str(component.get('SUMMARY','Ohne Titel')),date=key,time='' if all_day else event_start.strftime('%H:%M'),end='' if all_day else event_end.strftime('%H:%M'),all_day=all_day,calendar=name,color=index%5,location=str(component.get('LOCATION','')),uid=str(component.get('UID',''))))
+                    # Nur die betroffenen Tage ansteuern statt alle Eimer zu prüfen:
+                    # über ein ganzes Schuljahr wäre das Termine × 365 Durchläufe.
+                    erster=max(start,event_start.astimezone(TZ).date())
+                    letzter=min(start+timedelta(days=days-1),(event_end-timedelta(microseconds=1)).astimezone(TZ).date())
+                    tag=erster
+                    while tag<=letzter:
+                        schluessel=tag.isoformat()
+                        tag+=timedelta(days=1)
+                        buckets[schluessel].append(dict(event_key=stable_key,title=str(component.get('SUMMARY','Ohne Titel')),date=schluessel,time='' if all_day else event_start.strftime('%H:%M'),end='' if all_day else event_end.strftime('%H:%M'),all_day=all_day,calendar=name,color=index%5,location=str(component.get('LOCATION','')),uid=str(component.get('UID',''))))
         if selected and set(selected)-found: raise ValueError('Mindestens ein konfigurierter Kalender wurde nicht gefunden.')
     ids=store_events(durable,begin.isoformat(),end.isoformat())
     for key,events in buckets.items():
@@ -318,6 +323,25 @@ def sync_calendar(start=None,days=30):
     for old in (Path(current_app.instance_path)/'cache').glob('*.enc'):
         if old.stem < (now().date()-timedelta(days=60)).isoformat(): old.unlink()
     return f'{len(found)} Kalender aktualisiert'
+
+
+def schuljahr_fenster(tag=None):
+    """Erster und letzter Tag des Schuljahres, in dem dieser Tag liegt."""
+    tag = tag or now().date()
+    jahr = tag.year if tag.month >= 8 else tag.year - 1
+    return date(jahr, 8, 1), date(jahr + 1, 7, 31)
+
+
+def sync_school_year(tag=None):
+    """Den Kalender für das ganze laufende Schuljahr laden.
+
+    Der Fünf-Minuten-Abgleich hält nur ein schmales Fenster aktuell, damit er
+    kurz bleibt. Termine, die weiter voraus liegen, holt dieser Lauf einmal
+    täglich – so stehen sie zum Vormerken und Verknüpfen bereit, lange bevor
+    sie in das schmale Fenster rutschen.
+    """
+    beginn, ende = schuljahr_fenster(tag)
+    return sync_calendar(beginn, (ende - beginn).days + 1)
 
 
 def sync_all(calendar_day=None):
