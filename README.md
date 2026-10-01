@@ -468,17 +468,16 @@ Unvollständige oder nicht zuverlässig erkennbare Originalangaben werden weiter
 
 Ohne --apply wird nur geprüft. Manuell geänderte Betreffzeilen oder Nachrichtentexte werden übersprungen; Projektzuordnungen, Aufgaben und Anhänge bleiben erhalten.
 
-### PDF-Anhänge als Vorschau
+### PDF-Anhänge ansehen
 
-Bei hochgeladenen oder per Mail importierten PDF-Anhängen erscheint nach kurzem Überfahren mit der Maus eine Vorschau der **ersten Seite**. Die Vorschau bleibt offen, solange sich der Zeiger über dem Anhang oder im Fenster befindet. Die Schaltfläche **Vorschau** öffnet das Fenster dauerhaft und funktioniert auch per Tastatur oder auf dem Handy. Escape, die Schließen-Schaltfläche oder ein Klick außerhalb schließen es. Der ursprüngliche Anhang kann weiterhin heruntergeladen werden.
+Eine Anhangszeile ist zweizeilig: oben der Dateiname mit der Größe über die ganze Breite, darunter die Schaltflächen. Nebeneinander wurde ein längerer Name auf drei Zeilen zerquetscht.
 
-Die erste Seite wird lokal mit Poppler gerendert und erst beim Öffnen angefordert. PDF-Datei und Vorschau gehen nicht an externe Dienste; Vorschauantworten werden nicht dauerhaft im Browser zwischengespeichert. Passwortgeschützte, beschädigte oder nicht innerhalb des Zeitlimits darstellbare PDFs zeigen einen Hinweis mit Downloadmöglichkeit. Nextcloud-Dokumentverweise werden weiterhin direkt in Nextcloud geöffnet.
+Für PDF stehen zwei Wege bereit:
 
-Voraussetzung auf Ubuntu für die PDF-Vorschau:
+* **Vorschau** zeigt die erste Seite im Hoverfenster — ein Blick, ohne die Seite zu verlassen. Beim Zeigen auf die Zeile erscheint sie von selbst, ein Klick stellt sie fest, Escape schließt sie.
+* **Öffnen** liefert das PDF unverändert aus, sodass der Browser seinen **eigenen Betrachter** zeigt: blättern, suchen, zoomen und vor allem **Text markieren und kopieren**. Die Vorschau kann das nicht, weil sie ein gerendertes Bild ist.
 
-    sudo apt install poppler-utils
-
-Der lokale Entwicklungsrechner verfügt bereits über den Renderer. Die bestehende Serverkonfiguration benötigt keine zusätzliche Netzfreigabe.
+Ausgeliefert wird inline ausschließlich für PDF. Eine HTML- oder EML-Datei auf diesem Weg wäre ein fremdes Dokument auf der eigenen Herkunft; andere Dateiarten werden deshalb abgewiesen. Diese eine Antwort bekommt eine eigene, engere Sicherheitsrichtlinie: `default-src 'none'` mit `object-src 'self'`, damit der eingebettete Betrachter des Browsers arbeiten kann und sonst nichts. Der Klick auf den Dateinamen bleibt ein Download.
 
 ### Wann eine Mail als bearbeitet gilt
 

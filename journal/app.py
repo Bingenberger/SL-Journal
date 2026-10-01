@@ -154,6 +154,12 @@ def create_app(test_config=None):
             # Excalidraw positions its controls with React style attributes.
             # Keep script and stylesheet restrictions; allow only these attributes here.
             response.headers['Content-Security-Policy'] += "; style-src-attr 'unsafe-inline'; font-src 'self' data:"
+        if request.endpoint == 'attachment_inline':
+            # Der PDF-Betrachter des Browsers bettet die Datei intern ein;
+            # object-src 'none' würde ihn aussperren. Skripte und alles
+            # Weitere bleiben für dieses Dokument gesperrt.
+            response.headers['Content-Security-Policy'] = (
+                "default-src 'none'; object-src 'self'; base-uri 'none'; frame-ancestors 'none'")
         response.headers['X-Content-Type-Options'] = 'nosniff'
         # Innerhalb des Journals erlaubt, damit der Weg zurück zur vorherigen Ansicht
         # funktioniert; an fremde Server geht weiterhin keine Adresse.
@@ -450,6 +456,23 @@ def create_app(test_config=None):
         path=Path(app.instance_path)/'attachments'/item['path']
         if not path.exists(): abort(404,'Die Anhangsdatei fehlt.')
         return send_file(io.BytesIO(cipher().decrypt(path.read_bytes())),as_attachment=True,download_name=item['name'],mimetype='application/octet-stream')
+
+    @app.get('/attachment/<int:aid>/inline')
+    def attachment_inline(aid):
+        """Das PDF unverändert ausliefern, damit der Browser seinen eigenen
+        Betrachter öffnet – dort lässt sich Text markieren und kopieren.
+
+        Ausschließlich PDF: Eine inline ausgelieferte HTML-Datei wäre ein
+        fremdes Dokument auf der eigenen Herkunft und damit ein Einfallstor.
+        """
+        item=one('SELECT * FROM attachments WHERE id=?',(aid,))
+        if not item: abort(404)
+        if item['mime']!='application/pdf' and not item['name'].lower().endswith('.pdf'):
+            abort(415,'Nur PDF-Anhänge lassen sich im Betrachter öffnen.')
+        path=Path(app.instance_path)/'attachments'/item['path']
+        if not path.exists(): abort(404,'Die Anhangsdatei fehlt.')
+        return send_file(io.BytesIO(cipher().decrypt(path.read_bytes())),
+                         as_attachment=False,download_name=item['name'],mimetype='application/pdf')
 
     @app.post('/attachment/<int:aid>/delete')
     def attachment_delete(aid):

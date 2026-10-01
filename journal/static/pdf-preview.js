@@ -21,7 +21,7 @@
   }
   function close(restore=false) {
     clearTimeout(opening);clearTimeout(closing);version++;
-    if(active) active.querySelector('.pdf-preview-button').setAttribute('aria-expanded','false');
+    if(active) active.querySelector('.pdf-preview-button')?.setAttribute('aria-expanded','false');
     if(panel.hidePopover&&panel.matches(':popover-open')) panel.hidePopover();
     panel.hidden=true;surface.replaceChildren();active=null;pinned=false;
     if(restore&&returnFocus?.isConnected) {
@@ -44,7 +44,7 @@
     weiter.hidden=!row.dataset.pdfMore;
     if(row.dataset.pdfMore)weiter.href=row.dataset.pdfMore;
     status.textContent='Vorschau wird geladen …';status.hidden=false;
-    row.querySelector('.pdf-preview-button').setAttribute('aria-expanded','true');
+    row.querySelector('.pdf-preview-button')?.setAttribute('aria-expanded','true');
     panel.hidden=false;position();
     if(panel.showPopover) panel.showPopover();
     const img=document.createElement('img');
@@ -73,7 +73,7 @@
     row.addEventListener('focusout',()=>{
       setTimeout(()=>{if(!row.contains(document.activeElement)&&!panel.contains(document.activeElement))scheduleClose();},0);
     });
-    row.querySelector('.pdf-preview-button').addEventListener('click',()=>show(row,true));
+    row.querySelector('.pdf-preview-button')?.addEventListener('click',()=>show(row,true));
   });
   panel.addEventListener('pointerenter',()=>clearTimeout(closing));
   panel.addEventListener('pointerleave',scheduleClose);

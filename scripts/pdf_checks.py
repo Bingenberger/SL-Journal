@@ -19,7 +19,7 @@ def check_pdf_preview(page,app,output):
     panel=page.locator('#pdf-preview')
     row=page.locator(f'[data-pdf-url="/attachment/{aid}/preview"]')
     assert not preview_requests
-    row.get_by_role('link').hover()
+    row.locator('a.attachment').hover()
     expect(panel).to_be_visible()
     expect(panel.locator('img')).to_be_visible()
     assert panel.locator('img').evaluate('(img)=>img.naturalWidth>0')
@@ -39,7 +39,7 @@ def check_pdf_preview(page,app,output):
     expect(panel).not_to_be_visible()
     expect(button).to_be_focused()
     with page.expect_download() as download:
-        row.get_by_role('link').click()
+        row.locator('a.attachment').click()
     assert download.value.suggested_filename=='Vorschau.pdf'
     page.goto(origin+'/project/1')
     row.get_by_role('button',name='PDF-Vorschau:',exact=False).click()
@@ -57,4 +57,24 @@ def check_pdf_preview(page,app,output):
     panel.get_by_role('button',name='PDF-Vorschau schließen').click()
     expect(panel).not_to_be_visible()
     page.set_viewport_size({'width':1440,'height':1100})
+    # „Öffnen“ liefert das PDF unverändert aus – der Browser zeigt es in seinem
+    # eigenen Betrachter, in dem sich Text markieren lässt.
+    page.goto(origin+f'/entry/{eid}')
+    zeile=page.locator(f'[data-pdf-url="/attachment/{aid}/preview"]')
+    betrachter=zeile.get_by_role('link',name='Öffnen')
+    expect(betrachter).to_have_attribute('href',f'/attachment/{aid}/inline')
+    expect(betrachter).to_have_attribute('target','_blank')
+    antwort=page.request.get(origin+f'/attachment/{aid}/inline')
+    assert antwort.status==200,antwort.status
+    assert antwort.headers['content-type'].startswith('application/pdf'),antwort.headers['content-type']
+    assert antwort.headers['content-disposition'].startswith('inline'),antwort.headers['content-disposition']
+    assert "object-src 'self'" in antwort.headers['content-security-policy']
+    # Der EML-Anhang bekommt diesen Weg nicht.
+    assert page.request.get(origin+f'/attachment/{bad}/inline').status==200
+    # Zweizeilig: Name über den Schaltflächen, nicht daneben.
+    lage=zeile.evaluate("""(z)=>{const n=z.querySelector('.attachment').getBoundingClientRect();
+      const a=z.querySelector('.attachment-actions').getBoundingClientRect();
+      return {darunter:a.top>=n.bottom-1,breit:n.width>200};}""")
+    assert lage['darunter'],'Die Schaltflächen gehören unter den Dateinamen'
+    assert lage['breit'],'Der Dateiname soll die ganze Zeile bekommen'
     page.goto(origin+'/')

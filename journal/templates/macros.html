@@ -59,10 +59,13 @@
 {% set pdf=a.mime=='application/pdf' or a.name.lower().endswith('.pdf') %}
 <div class="attachment-row" {% if pdf %}data-pdf-url="{{ url_for('attachment_preview',aid=a.id) }}" data-pdf-name="{{ a.name }}" data-pdf-download="{{ url_for('attachment',aid=a.id) }}"{% endif %}>
 <a class="attachment" href="{{ url_for('attachment',aid=a.id) }}">{{ icon('download') }}<div>{{ a.name }}<small>{{ (a.size/1024)|round(1) }} KB</small></div></a>
+<div class="attachment-actions">
+{% if pdf %}<button type="button" class="text-button pdf-preview-button" aria-label="PDF-Vorschau: {{ a.name }}" aria-haspopup="dialog" aria-expanded="false" aria-controls="pdf-preview">{{ icon('eye') }} Vorschau</button>
+<a class="text-button" href="{{ url_for('attachment_inline',aid=a.id) }}" target="_blank" rel="noopener noreferrer" title="Im PDF-Betrachter des Browsers öffnen – dort lässt sich Text markieren und kopieren">{{ icon('external') }} Öffnen</a>{% endif %}
 <button type="button" class="text-button meeting-attachment-action" data-plan-meeting data-attachment-id="{{ a.id }}" data-source-entry-id="{{ a.entry_id }}" data-source-label="{{ a.name }}" data-text="{{ a.name }} besprechen">{{ icon('calendar') }} Für Termin vormerken</button>
 <form method="post" action="{{ url_for('attachment_delete',aid=a.id) }}" data-async data-confirm="Diesen Anhang endgültig löschen? Der Eintrag selbst bleibt erhalten."><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="text-button danger" aria-label="Anhang löschen: {{ a.name }}">{{ icon('delete') }} Löschen</button></form>
+</div>
 {% if a.mime in ['audio/webm','audio/ogg','audio/mp4'] %}<audio class="voice-player" controls preload="none" src="{{ url_for('attachment_audio',aid=a.id) }}" aria-label="{{ a.name }}"></audio>{% endif %}
-{% if pdf %}<button type="button" class="text-button pdf-preview-button" aria-label="PDF-Vorschau: {{ a.name }}" aria-haspopup="dialog" aria-expanded="false" aria-controls="pdf-preview">{{ icon('eye') }} Vorschau</button>{% endif %}
 </div>
 {% endmacro %}
 
