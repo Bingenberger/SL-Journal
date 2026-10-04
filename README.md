@@ -74,7 +74,7 @@ Eine Debug-APK baut GitHub Actions bei jeder Änderung unter `android/`; Bauanle
 - **Projekte:** Mehrfachzuordnung von Einträgen, chronologische Übersicht, offene und erledigte Aufgaben sowie alle Anhänge. Beim Abschluss kann die Aufgabenliste als Jahresprozess gespeichert werden. Abgeschlossene Projekte bleiben durchsuchbar.
 - **Aufgaben:** Fälligkeitsgruppen beziehen sich auf den angezeigten Tag. Ohne Datum gibt es eine eigene Liste. Erledigen und Wiederöffnen sind möglich; Klick auf den Aufgabentext öffnet die Bearbeitung. Bei mehreren Projekten im Herkunftseintrag wird standardmäßig das erste nach ID übernommen und kann geändert werden.
 - **Kontakte:** Namen, Rolle/Institution und mehrere Mailadressen; beim Mailimport erfolgt die Zuordnung anhand der Adressen.
-- **Suche:** Volltext in Titel, Text, Beteiligten, Absender und Tags, einschließlich archivierter Projektinhalte. Mehrere Suchwörter werden mit UND und Wortpräfixsuche kombiniert. Zusätzliche Typ- und Tagfilter. Anhangsinhalte werden nicht indexiert.
+- **Suche:** Volltext in Titel, Text, Beteiligten, Absender und Tags, einschließlich archivierter Projektinhalte. Mehrere Suchwörter werden mit UND und Wortpräfixsuche kombiniert. Zusätzliche Typ- und Tagfilter. Die globale Suche berücksichtigt außerdem indexierte PDF- und Textanhänge.
 - **Jahresprozesse:** Anfang = ab 1., Mitte = ab 11., Ende = ab 21. des gewählten Monats. Eine fällige Erinnerung bleibt bis zur Bestätigung sichtbar. Die Bestätigung erzeugt genau ein Projekt je Prozess und Schuljahr sowie die Vorlagenaufgaben ohne festes Fälligkeitsdatum. Schuljahreswechsel ist am 1. August.
 
 ## Vorgänge im Schulalltag
@@ -527,7 +527,7 @@ Für die Erzeugung ohne geöffneten Browser kann `.venv/bin/python manage.py tas
 
 Die Suchleiste im Kopfbereich durchsucht Einträge einschließlich ihres Volltexts, Aufgaben und Unteraufgaben, Projekte samt Beschreibung, Vorgänge samt Beschreibung sowie Kontakte nach Name, Rolle, Institution und Mailadresse. Tags und gespeicherte Nextcloud-Dokumentverweise werden ebenfalls gefunden. Erledigte Aufgaben und abgeschlossene Projekte bzw. Vorgänge bleiben auffindbar. Groß- und Kleinschreibung wird nicht unterschieden; mehrere Suchwörter werden gemeinsam berücksichtigt.
 
-Während der Eingabe erscheinen bis zu zehn Vorschläge mit Ressourcentyp. Ein Klick öffnet das Ziel; mit Pfeiltasten und Enter lässt sich ein Vorschlag per Tastatur wählen. Escape schließt die Vorschläge. Enter ohne Auswahl bzw. „Alle Treffer anzeigen“ öffnet die gemeinsame Ergebnisliste mit 40 Treffern je Seite. Die Suchfelder innerhalb einzelner Fachbereiche behalten ihre jeweiligen Filterfunktionen. Inhalte von Anhängen, Nextcloud-Dateien und Zeichnungen werden nicht durchsucht.
+Während der Eingabe erscheinen bis zu zehn Vorschläge mit Ressourcentyp. Ein Klick öffnet das Ziel; mit Pfeiltasten und Enter lässt sich ein Vorschlag per Tastatur wählen. Escape schließt die Vorschläge. Enter ohne Auswahl bzw. „Alle Treffer anzeigen“ öffnet die gemeinsame Ergebnisliste mit 40 Treffern je Seite. Die Suchfelder innerhalb einzelner Fachbereiche behalten ihre jeweiligen Filterfunktionen. Hochgeladene PDF- und Textanhänge werden nach ihrer Verarbeitung ebenfalls durchsucht. Inhalte verlinkter Nextcloud-Dateien und Zeichnungen werden nicht durchsucht.
 
 ### Vorschläge in Bereichssuchen und Kontaktfeldern
 
@@ -582,3 +582,49 @@ Python-Abhängigkeiten stehen in `requirements.txt`, die Frontend-Pakete sind ü
 Dieses Repository enthält **keine** Daten. Der Ordner `instance/` — Datenbank, Schlüssel, Anhänge, Zertifikate, Sicherungen — entsteht erst bei `manage.py init` auf Ihrem eigenen Rechner und ist von der Versionsverwaltung ausgeschlossen. Legen Sie ihn niemals in ein Repository, auch nicht in ein privates: Er enthält die Schlüssel zur verschlüsselten Datenbank.
 
 Die App ist für **eine** Schulleitung gedacht, hinter dem eigenen Netz oder VPN, mit Passwort und zweitem Faktor. Sie ist nicht darauf ausgelegt, offen im Internet zu stehen.
+
+
+### Volltextsuche in Anhängen
+
+Die globale Suche im Kopfbereich und ihre Vorschläge finden jetzt auch Text in hochgeladenen **PDFs (einschließlich Scans), Bilder (PNG, JPEG, TIFF, BMP, WebP), Office-Dateien (DOC/DOCX, XLS/XLSX, PPT/PPTX, ODT/ODS/ODP, RTF) sowie TXT-, CSV-, Markdown- und Logdateien**. Das gilt ebenso für Mailanhänge und Uploads aus Android. Die Bereichssuchen und die native Android-Eintragssuche behalten ihren bisherigen Umfang.
+
+Nach einem angemeldeten Aufruf verarbeitet ein Hintergrundarbeiter neue und vorhandene Anhänge. Upload und Suche warten nicht auf die Textextraktion. Bis zur Fertigstellung kann eine erneute Suche nötig sein. Ein Treffer pro Datei zeigt Dateiname, Herkunftseintrag und einen Textauszug; bei PDFs zusätzlich die passende Seite. Der Treffer öffnet den Anhang am Eintrag, „Datei öffnen“ öffnet PDFs im Browser auf der Fundseite (abhängig vom PDF-Betrachter) bzw. lädt Textdateien herunter. Mehrere Suchwörter müssen auf derselben PDF-Seite vorkommen.
+
+Am Eintrag steht der Suchstatus des Anhangs. Fehler und nicht unterstützte Formate lassen sich weiterhin herunterladen. Scans werden lokal mit Tesseract erkannt, Office-Dateien mit LibreOffice in eine auslesbare PDF-Darstellung überführt. **Audio und verlinkte Nextcloud-Inhalte bleiben ausgenommen**. Textdateien unterstützen UTF-8, UTF-16 mit BOM und Windows-1252. PDF-Seiten mit weniger als 40 Buchstaben/Ziffern werden zusätzlich per OCR gelesen, auch in gemischten Dokumenten. OCR läuft höchstens für 100 Seiten und innerhalb eines Gesamtbudgets von 240 Sekunden einschließlich Office-Konvertierung (laufende Konvertierung maximal 120 Sekunden). Pro Datei gelten maximal zwei Millionen extrahierte Zeichen. Wenn OCR nicht vollständig gelingt, bleibt vorhandener Text mit dem Status „teilweise durchsuchbar“ erhalten. Texte in Bildern auf bereits textreichen Seiten werden nicht zusätzlich erkannt. Office-Suche erfasst die PDF-/Druckdarstellung; beispielsweise ausgeblendete Tabellenzellen, Kommentare oder Foliennotizen sind dadurch nicht garantiert enthalten.
+
+PDF-Textextraktion benötigt `pdftotext` aus Poppler (unter Ubuntu: `poppler-utils`, unter macOS: `brew install poppler`; unter Windows muss `pdftotext.exe` im PATH liegen). Fehlt das Programm, bleibt die App benutzbar und zeigt den Fehler am Anhang an. Nach der Installation können fehlgeschlagene Dateien erneut verarbeitet werden:
+
+```bash
+.venv/bin/python manage.py index-attachments
+.venv/bin/python manage.py index-attachments --retry
+```
+
+Der zweite Befehl versucht auch teilweise erkannte, bisher leere und nicht unterstützte Dateien sowie Erkennungen mit Sprachwarnung erneut. Unter Windows entsprechend `.venv\Scripts\python.exe` verwenden. Die tägliche Wartung verarbeitet ebenfalls wartende Anhänge. Unterbrochene Aufträge werden beim nächsten Verarbeitungslauf nach zehn Minuten wieder freigegeben.
+
+Text, Verarbeitungsstatus und FTS5-Suchindex liegen in der verschlüsselten Datenbank und werden mitgesichert. PDF-Extraktion und OCR verwenden Ein-/Ausgabepipes. Für Office-Konvertierung nutzt LibreOffice wie bei der Vorschau kurzzeitig unverschlüsselte Dateien in einem eigenen temporären Verzeichnis, das anschließend entfernt wird. Beim Löschen eines Anhangs oder Eintrags entfernt die Datenbank auch seine Suchtexte und Indexeinträge. Bestehende Anhänge werden beim nächsten App-Start automatisch in die Warteschlange aufgenommen; eine erneute Übertragung ist nicht erforderlich.
+
+
+Für OCR und Office-Suche werden auf dem Rechner, auf dem das Journal läuft, Poppler, LibreOffice und Tesseract mit deutscher und englischer Sprache benötigt:
+
+```bash
+# Ubuntu / Debian
+sudo apt install poppler-utils libreoffice tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng
+# macOS (Homebrew)
+brew install poppler tesseract tesseract-lang
+brew install --cask libreoffice
+```
+
+`tesseract --list-langs` sollte `deu` und `eng` anzeigen. Ohne Deutsch wird Englisch mit einem sichtbaren Hinweis verwendet. Nach der Sprachinstallation `index-attachments --retry` ausführen. Neue OCR-/Office-Unterstützung stellt bereits indexierte Anhänge beim ersten Start einmalig erneut in die Warteschlange. OCR verändert die Originaldatei nicht und garantiert bei schlechter Scanqualität oder Handschrift keine fehlerfreie Erkennung.
+
+Installationsquellen: [Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html), [Homebrew-Sprachpakete](https://formulae.brew.sh/formula/tesseract-lang). Windows- und macOS-Einzelheiten stehen in den Installationsanleitungen.
+
+### Dateien von jeder Seite hochladen
+
+Unten rechts steht auf jeder angemeldeten Seite **Dateien ablegen oder auswählen**. Dateien auf das Feld ziehen oder anklicken und mehrere Dateien auswählen (höchstens 25 Dateien, zusammen 25 MB; Ordner werden nicht übernommen).
+
+- Auf einer Eintragsseite werden die Dateien sofort an diesen Eintrag angehängt. Die Anhangsliste wird ohne vollständiges Neuladen aktualisiert; andere Eingaben bleiben erhalten.
+- Auf dem Cockpit und anderen Seiten öffnet sich ein Dialog: **Neuen Eintrag anlegen** mit Titel, Datum, Projekten, Vorgängen und Tags oder **An bestehenden Eintrag anhängen** mit Autovervollständigung. Neue Einträge sind vom Typ Notiz.
+- Auf Projekt- und Vorgangsseiten ist die jeweilige Zuordnung für einen neuen Eintrag vorausgewählt. Im Cockpit wird das betrachtete Datum verwendet.
+- Die Fläche zeigt den Upload-Fortschritt und danach einen Link zum Eintrag. Bei Fehlern bleiben die Dateien für einen erneuten Versuch ausgewählt. Wiederholungen desselben Upload-Versuchs legen keine doppelten Anhänge an. Beim Verlassen mit noch nicht gespeicherten Dateien wird gewarnt.
+
+Die Dateien werden wie andere Anhänge verschlüsselt gespeichert und automatisch zur Volltextsuche einschließlich OCR verarbeitet. Der Upload verändert keine Metadaten eines bestehenden Eintrags.

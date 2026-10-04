@@ -52,7 +52,7 @@ def entry_details(entry):
     from .participants import participant_items
     entry['participant_items'] = participant_items(entry['id'])
     entry['drawings'] = rows('SELECT id,title,revision FROM drawings WHERE entry_id=? ORDER BY id', (entry['id'],))
-    entry['attachments'] = rows('SELECT * FROM attachments WHERE entry_id=?', (entry['id'],))
+    entry['attachments'] = rows('SELECT a.*,i.status search_status,i.detail search_detail FROM attachments a LEFT JOIN attachment_index i ON i.attachment_id=a.id WHERE entry_id=?', (entry['id'],))
     return entry
 
 
@@ -162,6 +162,7 @@ def save_attachment(entry_id, name, content, mime):
     path = uuid.uuid4().hex + '.enc'
     atomic_write(Path(current_app.instance_path)/'attachments'/path, cipher().encrypt(content))
     get_db().execute('INSERT INTO attachments(entry_id,name,path,mime,size) VALUES(?,?,?,?,?)',(entry_id,name,path,mime or 'application/octet-stream',len(content)))
+    return path
 
 
 VOICE_FORMATS = {'audio/webm':'webm','audio/ogg':'ogg','audio/mp4':'m4a'}

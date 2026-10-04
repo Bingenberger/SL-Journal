@@ -385,3 +385,23 @@ launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/de.sl-journal.local.pl
 ```
 
 Danach wieder **https://localhost:8443** verwenden. Bei manuellem Betrieb einfach mit `--host 127.0.0.1` starten. Die Python-Firewallfreigabe bei Bedarf in den Systemeinstellungen zurücknehmen und ein nicht mehr benötigtes CA-Profil auf dem iPad entfernen.
+
+
+## Anhänge durchsuchen: OCR und Office-Dateien
+
+Zusätzlich zu Poppler und LibreOffice Tesseract samt Sprachpaketen installieren:
+
+```bash
+brew install tesseract tesseract-lang
+tesseract --list-langs
+```
+
+Die Ausgabe sollte `deu` und `eng` enthalten. [Homebrew-Sprachpakete](https://formulae.brew.sh/formula/tesseract-lang). Der Journal-Prozess benötigt `pdftotext`, `pdftoppm`, `tesseract` und `soffice` im PATH; das gilt auch für den automatischen Start. Den oben beschriebenen LibreOffice-Pfad beibehalten und die App neu starten.
+
+Bestehende Dateien werden automatisch erneut vorbereitet. Nach einer nachträglichen Installation fehlender Programme oder Sprachen:
+
+```bash
+.venv/bin/python manage.py index-attachments --retry
+```
+
+Scans und Bilder werden lokal erkannt; die Qualität hängt vom Ausgangsmaterial ab. Office-Suche erfasst die Druckdarstellung. Der Suchstatus steht am Anhang, verlinkte Nextcloud-Dateien bleiben ausgenommen.

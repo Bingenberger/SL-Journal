@@ -10,7 +10,8 @@ def search(query, *, fulltext=False, limit=20, offset=0):
     words=normalized(query).split()
     if fulltext and not words:
         return dict(items=[],more=False,total=0)
-    groups=[[],[],[],[],[],[],[]]
+    groups=[[],[],[],[],[],[],[],[]]
+    attachment_details={}
     # Candidates keep only their label and how to build the link. The address is
     # assembled after paging, so a keystroke never builds thousands of URLs.
     def add(group,label,kind,endpoint,values,detail='',search_text='',matched=False):
@@ -66,6 +67,16 @@ def search(query, *, fulltext=False, limit=20, offset=0):
         add(6,case['title'],'Vorgang','case_view',dict(cid=case['id']),STATUSES[case['status']],case['description'])
     for document in rows('SELECT * FROM documents ORDER BY name,id'):
         add(5,document['name'],'Nextcloud-Dokument','document_view',dict(did=document['id']),document['description'],'Datei Ordner '+document['url'])
+    if fulltext:
+        from .attachment_search import matches
+        for hit in matches(query):
+            aid=hit['id']
+            if aid in attachment_details:
+                continue
+            pdf=hit['mime']=='application/pdf' or hit['name'].lower().endswith('.pdf')
+            detail=hit['title'] + (f" · Seite {hit['page']}" if pdf else '')
+            add(7,hit['name'],'Anhang','entry_view',dict(eid=hit['entry_id'],_anchor='attachment-'+str(aid)),detail,matched=True)
+            attachment_details[aid]=dict(excerpt=hit['excerpt'],file_url=url_for('attachment_inline' if pdf else 'attachment',aid=aid,**({'_anchor':'page='+str(hit['page'])} if pdf else {})))
     prefix=normalized(query).lstrip('#')
     for group in groups:
         group.sort(key=lambda item: not normalized(item[0]).lstrip('#').startswith(prefix))
@@ -75,4 +86,8 @@ def search(query, *, fulltext=False, limit=20, offset=0):
             if index<len(group): result.append(group[index])
     page=[dict(label=label,kind=kind,url=url_for(endpoint,**values),detail=detail)
           for label,kind,detail,endpoint,values in result[offset:offset+limit]]
+    for item in page:
+        if item['kind']=='Anhang':
+            aid=int(item['url'].rsplit('attachment-',1)[1])
+            item.update(attachment_details[aid])
     return dict(items=page,more=len(result)>offset+limit,total=len(result))

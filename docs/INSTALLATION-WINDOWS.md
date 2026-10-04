@@ -308,3 +308,24 @@ Remove-NetFirewallRule -Name "SL-Journal-LAN"
 ```
 
 Die erweiterten Zertifikate funktionieren weiterhin mit `https://localhost:8443`. Wird die CA auf dem iPad nicht mehr benötigt, das betreffende selbst installierte Profil dort wieder entfernen.
+
+
+## Anhänge durchsuchen: OCR und Office-Dateien
+
+Für die Volltextsuche müssen `pdftotext.exe` und `pdftoppm.exe` aus Poppler sowie `soffice.exe` aus LibreOffice im PATH des Journal-Prozesses liegen. Für Scans und Bilder zusätzlich Tesseract installieren; die [Tesseract-Installationsdokumentation](https://tesseract-ocr.github.io/tessdoc/Installation.html#windows) verweist auf Windows-Installer. Die Sprachen Deutsch (`deu`) und Englisch (`eng`) mitinstallieren. Den Tesseract-Programmordner, normalerweise `C:\Program Files\Tesseract-OCR`, zum Benutzer-PATH hinzufügen. Bei automatischem Start muss derselbe PATH dort verfügbar sein.
+
+In einer neuen PowerShell prüfen:
+
+```powershell
+pdftotext -v
+tesseract --list-langs
+soffice --version
+```
+
+App neu starten. Bestehende Dateien werden automatisch erneut vorbereitet. Nach einer nachträglichen Installation fehlender Werkzeuge oder Sprachen:
+
+```powershell
+.venv\Scripts\python.exe manage.py index-attachments --retry
+```
+
+Der Suchstatus steht am Anhang. OCR kann bei schlechter Scanqualität unvollständig sein. Office-Dateien werden über ihre Druckdarstellung durchsucht. Verlinkte Nextcloud-Dateien werden nicht heruntergeladen oder indexiert.

@@ -564,3 +564,13 @@ body.sidebar-collapsed .profile form{margin:0}
 .task-origin-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:24ch}
 .task-origin .icon{width:11px;height:11px;flex:none;align-self:center}
 @media(max-width:700px){.task-origin-title{max-width:18ch}}
+
+/* Global file drop target, clear of navigation and modal dialogs. */
+.quick-upload{position:fixed;right:20px;bottom:18px;z-index:35;max-width:300px;padding:10px;background:var(--paper);border:1px dashed var(--line);border-radius:12px;box-shadow:0 4px 20px #233b4020}
+.quick-upload.dragging{outline:3px solid var(--accent,#267663);background:var(--soft)}
+.quick-upload .button{width:100%;font-size:12px}.quick-upload p{font-size:12px;margin:6px 0 0;overflow-wrap:anywhere}.quick-upload p:empty{display:none}.quick-upload progress{width:100%}.quick-upload a{font-size:12px}
+body:has(.quick-upload) .page-footer{padding-bottom:130px}
+#upload-dialog [data-upload-list]{overflow-wrap:anywhere;max-height:130px;overflow:auto}
+#upload-dialog [data-upload-mode] label{display:flex;align-items:center;gap:8px}
+#upload-dialog input[type=radio]{width:auto}
+@media(max-width:700px){.quick-upload{right:10px;bottom:10px;max-width:245px;padding:6px}.quick-upload .button{font-size:11px}}

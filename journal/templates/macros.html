@@ -57,8 +57,8 @@
 
 {% macro attachment_row(a) %}
 {% set pdf=a.mime=='application/pdf' or a.name.lower().endswith('.pdf') %}
-<div class="attachment-row" {% if pdf %}data-pdf-url="{{ url_for('attachment_preview',aid=a.id) }}" data-pdf-name="{{ a.name }}" data-pdf-download="{{ url_for('attachment',aid=a.id) }}"{% endif %}>
-<a class="attachment" href="{{ url_for('attachment',aid=a.id) }}">{{ icon('download') }}<div>{{ a.name }}<small>{{ (a.size/1024)|round(1) }} KB</small></div></a>
+<div class="attachment-row" id="attachment-{{ a.id }}" {% if pdf %}data-pdf-url="{{ url_for('attachment_preview',aid=a.id) }}" data-pdf-name="{{ a.name }}" data-pdf-download="{{ url_for('attachment',aid=a.id) }}"{% endif %}>
+<a class="attachment" href="{{ url_for('attachment',aid=a.id) }}">{{ icon('download') }}<div>{{ a.name }}<small>{{ (a.size/1024)|round(1) }} KB</small>{% if a.search_status %}<small title="{{ a.search_detail }}">{{ {'pending':'Volltextsuche: wartet','processing':'Text wird ausgelesen …','ready':'Volltext durchsuchbar','partial':'Volltext teilweise durchsuchbar','empty':'Kein lesbarer Text erkannt','unsupported':'Nur Dateidownload; kein Volltext','error':'Volltext nicht verfügbar'}.get(a.search_status) }}{% if a.search_detail %} · {{ a.search_detail }}{% endif %}</small>{% endif %}</div></a>
 <div class="attachment-actions">
 {% if pdf %}<button type="button" class="text-button pdf-preview-button" aria-label="PDF-Vorschau: {{ a.name }}" aria-haspopup="dialog" aria-expanded="false" aria-controls="pdf-preview">{{ icon('eye') }} Vorschau</button>
 <a class="text-button" href="{{ url_for('attachment_inline',aid=a.id) }}" target="_blank" rel="noopener noreferrer" title="Im PDF-Betrachter des Browsers öffnen – dort lässt sich Text markieren und kopieren">{{ icon('external') }} Öffnen</a>{% endif %}

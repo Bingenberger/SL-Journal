@@ -70,6 +70,11 @@ CREATE TABLE IF NOT EXISTS tasks (
  parent_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
  case_id INTEGER REFERENCES cases(id) ON DELETE SET NULL,
  tags TEXT NOT NULL DEFAULT '');
+-- Quittung je Upload-Vorgang: Ein wiederholter Versuch mit demselben Schlüssel
+-- liefert den vorhandenen Eintrag, statt alles ein zweites Mal anzulegen.
+CREATE TABLE IF NOT EXISTS upload_receipts (
+ request_key TEXT PRIMARY KEY, entry_id INTEGER NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
+ created REAL NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS calendar_events (
  id INTEGER PRIMARY KEY, event_key TEXT NOT NULL UNIQUE,
  calendar_key TEXT NOT NULL, uid TEXT NOT NULL, occurrence TEXT NOT NULL DEFAULT '',
@@ -260,6 +265,8 @@ def init_db():
         get_db().execute('ALTER TABLE tasks ADD COLUMN parent_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL')
     if 'tags' not in {column['name'] for column in get_db().execute('PRAGMA table_info(tasks)')}:
         get_db().execute("ALTER TABLE tasks ADD COLUMN tags TEXT NOT NULL DEFAULT ''")
+    if 'created' not in {column['name'] for column in get_db().execute('PRAGMA table_info(upload_receipts)')}:
+        get_db().execute('ALTER TABLE upload_receipts ADD COLUMN created REAL NOT NULL DEFAULT 0')
     get_db().execute('CREATE INDEX IF NOT EXISTS task_parent ON tasks(parent_id)')
     retire_collections(db)
     from .participants import migrate_participants

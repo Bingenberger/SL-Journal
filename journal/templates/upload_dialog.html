@@ -1,0 +1,16 @@
+{% from 'case_fields.html' import case_field with context %}
+<aside class="quick-upload" aria-label="Dateien hochladen" data-entry="{{ entry.id if request.endpoint=='entry_view' and entry is defined else '' }}" data-project="{{ project.id if request.endpoint=='project_view' and project is defined else '' }}" data-case="{{ case.id if request.endpoint=='case_view' and case is defined else '' }}">
+<button type="button" class="button" id="upload-drop">{{ icon('attachment') }} <span>Dateien ablegen oder auswählen</span></button>
+<input type="file" id="upload-files" multiple hidden aria-label="Dateien auswählen">
+<progress id="upload-progress" max="100" value="0" hidden aria-label="Upload-Fortschritt"></progress>
+<p id="upload-status" role="status" aria-live="polite"></p><a id="upload-result" hidden>Eintrag öffnen</a>
+</aside>
+<dialog id="upload-dialog"><form action="{{ url_for('quick_upload') }}" method="post" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="dialog-heading"><h2>Dateien hinzufügen</h2><button type="button" class="icon-button" data-upload-close aria-label="Schließen">{{ icon('close') }}</button></div>
+<p data-upload-list></p><p class="small muted">Mehrere Dateien · zusammen höchstens 25 MB</p><div class="form-error" role="alert" hidden></div>
+<fieldset data-upload-mode><legend>Wohin gehören die Dateien?</legend><label><input type="radio" name="mode" value="new" checked> Neuen Eintrag anlegen</label><label><input type="radio" name="mode" value="existing"> An bestehenden Eintrag anhängen</label></fieldset>
+<fieldset data-upload-new><label>Titel<input name="title" maxlength="500" required></label><label>Datum<input name="date" type="date" value="{{ today }}" required></label><label>Projekte<select name="projects" multiple data-autocomplete="projects" data-label="Projekte" data-include-closed="true">{% for p in all_projects %}<option value="{{ p.id }}" data-label="{{ p.name }}">{{ p.name }}</option>{% endfor %}</select></label>{{ case_field() }}<label>Tags<input name="tags" data-autocomplete="tags" data-label="Tags"></label></fieldset>
+<fieldset data-upload-existing hidden disabled><label>Eintrag<select name="target_id" data-autocomplete="entries" data-label="Eintrag auswählen"><option value="">Eintrag suchen …</option></select></label></fieldset>
+<div class="dialog-footer"><button type="button" class="button" data-upload-close>{{ icon('close') }} Abbrechen</button><button type="submit" class="button primary">{{ icon('attachment') }} Hochladen</button></div>
+</form></dialog>

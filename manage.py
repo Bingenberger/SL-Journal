@@ -21,6 +21,8 @@ def main():
     run.add_argument('--key',type=Path,help='Schlüssel zum eigenen Zertifikat')
     repair=sub.add_parser('repair-forwards',help='Unveränderte importierte Weiterleitungen aus Original.eml korrigieren')
     repair.add_argument('--apply',action='store_true',help='Korrekturen speichern')
+    index_cmd=sub.add_parser('index-attachments',help='Anhangstexte für die Volltextsuche verarbeiten')
+    index_cmd.add_argument('--retry',action='store_true',help='Fehlgeschlagene und bisher nicht lesbare Anhänge erneut versuchen')
     sub.add_parser('tasks',help='Fällige Aufgaben aus Serien bis 14 Tage im Voraus anlegen')
     sub.add_parser('sync',help='IMAP und CalDAV synchronisieren')
     calendar=sub.add_parser('calendar',help='Kalendercache für einen Zeitraum laden')
@@ -75,6 +77,10 @@ def main():
         elif args.command=='repair-forwards':
             from journal.mail_repair import repair_forwarded_mails
             print(json.dumps(repair_forwarded_mails(args.apply),ensure_ascii=False))
+        elif args.command=='index-attachments':
+            from journal.attachment_search import process_pending,summary
+            print(f'{process_pending(retry=args.retry)} Anhänge verarbeitet.')
+            print(json.dumps(summary(),ensure_ascii=False))
         elif args.command=='tasks':
             from journal.recurrence import generate
             print(f'{generate()} neue Serienaufgaben angelegt.')
@@ -96,7 +102,12 @@ def main():
                 if not (instance/'backup.key').exists(): raise ValueError('Backupschlüssel fehlt. Wartung abgebrochen.')
                 from journal.recurrence import generate
                 generate()
-                print(f'{len(purge(apply=True))} Einträge nach Löschfrist entfernt.');print(backup())
+                # Erst löschen, dann indexieren: Sonst liefe die Texterkennung
+                # noch über Anhänge, die gleich danach verschwinden.
+                print(f'{len(purge(apply=True))} Einträge nach Löschfrist entfernt.')
+                from journal.attachment_search import process_pending
+                process_pending()
+                print(backup())
                 # Das ganze Schuljahr einmal täglich nachziehen. Ein Fehler hier
                 # darf die bereits erledigte Sicherung nicht nachträglich
                 # zunichtemachen, deshalb nur melden.

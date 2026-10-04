@@ -5,6 +5,7 @@ import io
 import json
 import os
 import secrets
+import re
 import time
 from datetime import date, timedelta
 from pathlib import Path
@@ -62,6 +63,11 @@ def create_app(test_config=None):
     app.teardown_appcontext(close_db)
     with app.app_context():
         init_db()
+        from . import attachment_search
+        attachment_search.init()
+        get_db().commit()
+    import threading
+    app.extensions['attachment_search_lock'] = threading.Lock()
 
     from .handwriting import bp as handwriting_bp
     app.register_blueprint(handwriting_bp)
@@ -149,6 +155,9 @@ def create_app(test_config=None):
 
     @app.after_request
     def headers(response):
+        if (request.endpoint != 'static' and response.status_code < 400
+                and (session.get('auth') or getattr(g, 'device', None))):
+            attachment_search.kick(app, sofort=request.method not in ('GET', 'HEAD'))
         response.headers['Content-Security-Policy'] = f"default-src 'self'; script-src 'self'; style-src 'self' 'nonce-{g.style_nonce}'; img-src 'self' data:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
         if request.endpoint in ('handwriting.new', 'handwriting.edit'):
             # Excalidraw positions its controls with React style attributes.
@@ -344,6 +353,60 @@ def create_app(test_config=None):
         path=Path(app.instance_path)/'attachments'/item['path']
         if not path.exists(): abort(404)
         return send_file(io.BytesIO(cipher().decrypt(path.read_bytes())),mimetype=item['mime'],conditional=True)
+
+    @app.post('/attachments/upload')
+    def quick_upload():
+        key=request.form.get('request_key','')
+        if not re.fullmatch(r'[a-f0-9-]{36}',key):
+            raise ValueError('Ungültige Upload-Kennung. Bitte Dateien erneut auswählen.')
+        files=[f for f in request.files.getlist('attachments') if f.filename]
+        if not files or len(files)>25:
+            raise ValueError('Bitte zwischen 1 und 25 Dateien auswählen.')
+        payload=[]
+        total=0
+        for upload in files:
+            content=upload.read(25*1024*1024+1)
+            total+=len(content)
+            if total>25*1024*1024:
+                raise ValueError('Die Dateien dürfen zusammen höchstens 25 MB groß sein.')
+            payload.append((upload.filename,content,upload.mimetype))
+        db=get_db()
+        db.execute('BEGIN IMMEDIATE')
+        written=[]
+        try:
+            receipt=one('SELECT entry_id FROM upload_receipts WHERE request_key=?',(key,))
+            if receipt:
+                db.rollback()
+                return jsonify(ok=True,entry_id=receipt['entry_id'],url=url_for('entry_view',eid=receipt['entry_id']))
+            mode=request.form.get('mode')
+            if mode=='existing':
+                eid=request.form.get('target_id',type=int)
+                if not eid or not one('SELECT id FROM entries WHERE id=?',(eid,)):
+                    raise ValueError('Bitte einen vorhandenen Eintrag auswählen.')
+            elif mode=='new':
+                data={k:request.form.get(k,'') for k in ('title','date','tags','project_items','case_items') if k in request.form}
+                data['type']='note'
+                eid=save_entry(data,request.form.getlist('projects'))
+                from .case_suggestions import sync,parse
+                # save_entry already processes case_items; raw cases work too.
+                if 'case_items' not in data:
+                    sync('entry',eid,parse({},request.form.getlist('cases')))
+            else:
+                raise ValueError('Bitte ein Upload-Ziel auswählen.')
+            for name,content,mime in payload:
+                path=save_attachment(eid,name,content,mime)
+                written.append(path)
+            # Eine Quittung nützt nur so lange, wie derselbe Upload wiederholt
+            # werden könnte. Ältere halten die Tabelle sonst unbegrenzt am Wachsen.
+            db.execute('DELETE FROM upload_receipts WHERE created<?',(time.time()-7*86400,))
+            db.execute('INSERT INTO upload_receipts(request_key,entry_id,created) VALUES(?,?,?)',(key,eid,time.time()))
+            db.commit()
+        except Exception:
+            db.rollback()
+            for path in written:
+                (Path(app.instance_path)/'attachments'/path).unlink(missing_ok=True)
+            raise
+        return jsonify(ok=True,entry_id=eid,url=url_for('entry_view',eid=eid))
 
     @app.post('/entry/save')
     def entry_save():
@@ -851,7 +914,7 @@ def create_app(test_config=None):
         query=request.args.get('q','').strip()[:200]
         page=max(1,request.args.get('page',1,type=int))
         found=search(query,fulltext=True,limit=40,offset=(page-1)*40)
-        return render_template('search.html',query=query,page=page,**found)
+        return render_template('search.html',query=query,page=page,index_status=attachment_search.summary(),**found)
 
     @app.get('/api/search')
     def global_search_suggestions():
