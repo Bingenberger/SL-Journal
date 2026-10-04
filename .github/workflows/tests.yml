@@ -16,9 +16,14 @@ jobs:
           python-version: '3.12'
           cache: pip
 
-      # Die PDF-Vorschau rendert Seiten mit pdftoppm.
-      - name: Poppler installieren
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+      # pdftoppm/pdftotext für Vorschau und Textauszug, Tesseract für die OCR
+      # eingescannter Anhänge. LibreOffice fehlt bewusst: Es wiegt einige
+      # hundert MB; die Office-Umwandlung überspringt ihren Test dann sauber.
+      - name: Poppler und Tesseract installieren
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            poppler-utils tesseract-ocr tesseract-ocr-deu
 
       - name: Abhängigkeiten installieren
         run: pip install -r requirements-dev.txt

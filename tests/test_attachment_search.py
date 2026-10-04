@@ -85,7 +85,10 @@ def test_deleted_during_extraction(app,monkeypatch):
 
 def text_pdf():
     objects=[b'<< /Type /Catalog /Pages 2 0 R >>',b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 300] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>']
-    stream=b'BT /F1 12 Tf 20 250 Td (Leseband im Schulalltag) Tj ET'
+    # Mehr als 40 Buchstaben: Darunter hält pdf_text die Seite für einen Scan
+    # und schickt sie durch die OCR – dieser Test soll aber allein den
+    # Textauszug aus der PDF prüfen, auch ohne Tesseract.
+    stream=b'BT /F1 12 Tf 20 250 Td (Leseband im Schulalltag der Grundschule Sonnenbogen) Tj ET'
     objects.append(b'<< /Length '+str(len(stream)).encode()+b' >>\nstream\n'+stream+b'\nendstream')
     data=b'%PDF-1.4\n';offsets=[0]
     for n,obj in enumerate(objects,1):
