@@ -594,3 +594,11 @@ dialog.wide textarea[data-markdown]{min-height:360px}
   dialog.wide .cm-scroller{max-height:55vh}
   dialog.wide textarea[data-markdown]{min-height:0}
 }
+
+/* Trefferfilter nach Art: die Plakette am Treffer nennt dieselbe Bezeichnung */
+.kind-filter{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.kind-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);
+  border-radius:999px;background:var(--paper);font-size:12px;color:#5c6f72;white-space:nowrap}
+.kind-chip:hover{border-color:#8db9a8;color:var(--teal)}
+.kind-chip.selected{background:var(--teal);border-color:var(--teal);color:#fff}
+.kind-chip.selected .number{background:#ffffff2e;color:#fff}

@@ -913,8 +913,10 @@ def create_app(test_config=None):
         from .resources import search
         query=request.args.get('q','').strip()[:200]
         page=max(1,request.args.get('page',1,type=int))
-        found=search(query,fulltext=True,limit=40,offset=(page-1)*40)
-        return render_template('search.html',query=query,page=page,index_status=attachment_search.summary(),**found)
+        kind=request.args.get('kind','').strip()[:40]
+        found=search(query,fulltext=True,limit=40,offset=(page-1)*40,kind=kind)
+        return render_template('search.html',query=query,page=page,kind=kind,
+                               index_status=attachment_search.summary(),**found)
 
     @app.get('/api/search')
     def global_search_suggestions():

@@ -4,7 +4,7 @@ from .db import get_db, rows
 from .participants import normalized
 
 
-def search(query, *, fulltext=False, limit=20, offset=0):
+def search(query, *, fulltext=False, limit=20, offset=0, kind=''):
     from .domain import TYPES
     query=query.strip()[:200]
     words=normalized(query).split()
@@ -37,15 +37,16 @@ def search(query, *, fulltext=False, limit=20, offset=0):
     tag_cache={}
     # Read in storage order: sorting the whole table by date costs more than the scan
     # itself. Only the matches are put into date order afterwards.
-    for eid,title,day,kind,tags in get_db().execute('SELECT id,title,date,type,tags FROM entries ORDER BY id DESC'):
-        label=TYPES[kind]
+    # Nicht „kind“ nennen: Das ist der Filterparameter dieser Funktion.
+    for eid,title,day,typ,tags in get_db().execute('SELECT id,title,date,type,tags FROM entries ORDER BY id DESC'):
+        label=TYPES[typ]
         if (fulltext and eid in entry_matches) or not words:
             entry_group.append((title,label,day,'entry_view',dict(eid=eid)))
         else:
-            key=(label,day,kind)
+            key=(label,day,typ)
             rest=rest_cache.get(key)
             if rest is None:
-                rest=rest_cache[key]=normalized(' '.join([label,day,'Sitzungsprotokoll Protokoll' if kind in ('meeting','protocol') else '']))
+                rest=rest_cache[key]=normalized(' '.join([label,day,'Sitzungsprotokoll Protokoll' if typ in ('meeting','protocol') else '']))
             # A search word never contains a space, so it always lies inside one part.
             title_key=normalized(title)
             if all(word in title_key or word in rest for word in words):
@@ -84,10 +85,21 @@ def search(query, *, fulltext=False, limit=20, offset=0):
     for index in range(max(map(len,groups),default=0)):
         for group in groups:
             if index<len(group): result.append(group[index])
+    # Die Plakette am Treffer nennt bereits die Art – Protokoll, Aufgabe, Anhang.
+    # Genau danach wird gefiltert, mit den Zahlen des ungefilterten Bestands.
+    bestand={}
+    for eintrag in result:
+        bestand[eintrag[1]]=bestand.get(eintrag[1],0)+1
+    reihenfolge=list(TYPES.values())+['Aufgabe','Vorgang','Projekt','Kontakt','Tag','Nextcloud-Dokument','Anhang']
+    arten=[dict(name=name,count=bestand[name])
+           for name in sorted(bestand,key=lambda name:(reihenfolge.index(name) if name in reihenfolge else len(reihenfolge),name))]
+    gesamt=len(result)
+    if kind:
+        result=[eintrag for eintrag in result if eintrag[1]==kind]
     page=[dict(label=label,kind=kind,url=url_for(endpoint,**values),detail=detail)
           for label,kind,detail,endpoint,values in result[offset:offset+limit]]
     for item in page:
         if item['kind']=='Anhang':
             aid=int(item['url'].rsplit('attachment-',1)[1])
             item.update(attachment_details[aid])
-    return dict(items=page,more=len(result)>offset+limit,total=len(result))
+    return dict(items=page,more=len(result)>offset+limit,total=len(result),kinds=arten,all_total=gesamt)

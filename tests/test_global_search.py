@@ -59,3 +59,63 @@ def test_entry_results_stay_in_date_order(app,client):
         db.commit()
     items=client.get('/api/search?q=Ordnung',base_url='https://localhost').json['items']
     assert [item['label'] for item in items]==['Ordnung neu','Ordnung mitte','Ordnung alt']
+
+
+def arten(client,**args):
+    from urllib.parse import urlencode
+    seite=client.get('/search?'+urlencode(args),base_url='https://localhost')
+    return seite
+
+
+def test_trefferfilter_nach_art(app,client):
+    from journal.db import get_db
+    from journal.domain import save_entry,save_task
+    from journal.resources import search
+    with app.test_request_context('/'):
+        for titel,typ in [('Konferenz Betreuung','protocol'),('Nachlese Betreuung','protocol'),
+                          ('Betreuung besprochen','meeting'),('Notiz Betreuung','note')]:
+            save_entry(dict(title=titel,date='2026-10-06',type=typ))
+        save_task(dict(text='Betreuung klären'))
+        get_db().commit()
+        offen=search('Betreuung',fulltext=True,limit=40)
+        zaehlung={a['name']:a['count'] for a in offen['kinds']}
+        assert zaehlung=={'Protokoll':2,'Gespräch':1,'Notiz':1,'Aufgabe':1}
+        assert offen['total']==5 and offen['all_total']==5
+        # Die Reihenfolge folgt den Eintragsarten, danach das Übrige.
+        assert [a['name'] for a in offen['kinds']]==['Gespräch','Protokoll','Notiz','Aufgabe']
+
+        gefiltert=search('Betreuung',fulltext=True,limit=40,kind='Protokoll')
+        assert gefiltert['total']==2, 'nur die Protokolle'
+        assert gefiltert['all_total']==5, 'die Zahlen der Chips bleiben die des ganzen Bestands'
+        assert {i['kind'] for i in gefiltert['items']}=={'Protokoll'}
+        assert {a['name'] for a in gefiltert['kinds']}==set(zaehlung), 'alle Arten bleiben wählbar'
+
+        assert search('Betreuung',fulltext=True,limit=40,kind='Gibtsnicht')['total']==0
+
+
+def test_filter_in_der_oberflaeche(app,client):
+    from journal.db import get_db
+    from journal.domain import save_entry
+    with app.app_context():
+        save_entry(dict(title='Konferenz Betreuung',date='2026-10-06',type='protocol'))
+        save_entry(dict(title='Notiz Betreuung',date='2026-10-06',type='note'))
+        get_db().commit()
+    seite=arten(client,q='Betreuung').get_data(as_text=True)
+    assert 'kind-filter' in seite and 'kind=Protokoll' in seite
+    gefiltert=arten(client,q='Betreuung',kind='Protokoll').get_data(as_text=True)
+    assert 'Konferenz Betreuung' in gefiltert and 'Notiz Betreuung' not in gefiltert
+    assert '1 Treffer von 2' in gefiltert
+    # Das Blättern muss den Filter mitnehmen.
+    assert 'kind=Protokoll' in gefiltert
+    leer=arten(client,q='Betreuung',kind='Telefonat').get_data(as_text=True)
+    assert 'Keine Treffer der Art' in leer and 'Filter aufheben' in leer
+
+
+def test_ein_einziger_treffertyp_bekommt_keinen_filter(app,client):
+    from journal.db import get_db
+    from journal.domain import save_entry
+    with app.app_context():
+        save_entry(dict(title='Einzelstück',date='2026-10-06',type='note'))
+        get_db().commit()
+    seite=arten(client,q='Einzelstück').get_data(as_text=True)
+    assert 'kind-filter' not in seite, 'eine Art allein braucht keine Auswahl'

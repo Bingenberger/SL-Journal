@@ -535,6 +535,12 @@ Die Suchleiste im Kopfbereich durchsucht Einträge einschließlich ihres Volltex
 
 Während der Eingabe erscheinen bis zu zehn Vorschläge mit Ressourcentyp. Ein Klick öffnet das Ziel; mit Pfeiltasten und Enter lässt sich ein Vorschlag per Tastatur wählen. Escape schließt die Vorschläge. Enter ohne Auswahl bzw. „Alle Treffer anzeigen“ öffnet die gemeinsame Ergebnisliste mit 40 Treffern je Seite. Die Suchfelder innerhalb einzelner Fachbereiche behalten ihre jeweiligen Filterfunktionen. Hochgeladene PDF- und Textanhänge werden nach ihrer Verarbeitung ebenfalls durchsucht. Inhalte verlinkter Nextcloud-Dateien und Zeichnungen werden nicht durchsucht.
 
+### Treffer nach Art filtern
+
+Über den Suchergebnissen steht eine Reihe von Schaltern mit der Zahl der Treffer je Art: **Alle**, dann die Eintragsarten — Mail, Gespräch, Protokoll, Telefonat, Journal, Notiz — gefolgt von Aufgabe, Vorgang, Projekt, Kontakt, Tag, Dokument und Anhang. Angeboten wird nur, wozu es Treffer gibt; bei einer einzigen Art entfällt die Reihe.
+
+Die Bezeichnungen sind dieselben wie auf der Plakette am Treffer, die Zahlen beziehen sich immer auf den ungefilterten Bestand — so bleibt sichtbar, was ein anderer Schalter brächte. In der Kopfzeile steht dann „2 Treffer von 8". Das Blättern nimmt den Filter mit.
+
 ### Vorschläge in Bereichssuchen und Kontaktfeldern
 
 Auch die Suchfelder unter Aufgaben, Projekten, Vorgängen, Kontakten, Tags, Einträgen/Posteingang und auf der gemeinsamen Suchseite zeigen Vorschläge während der Eingabe. Die Bereichsvorschläge berücksichtigen die gesetzten Filter, beispielsweise Status, Institution, Projekt, Vorgang, Fälligkeit oder Eintragstyp. Ein Vorschlag öffnet den jeweiligen Inhalt; „Alle Treffer anzeigen“ und Enter ohne Auswahl führen die Suche mit den aktuellen Filtern aus.
