@@ -112,6 +112,12 @@ Unter „Neuer Eintrag“ → „Art“ → „Protokoll“ stehen Tagesordnung,
 
 Bestehende Datenbanken werden beim Start automatisch erweitert; vorhandene Einträge und Verknüpfungen bleiben erhalten.
 
+### Breite Ansicht im Eintragsdialog
+
+Neben dem Schließen-Kreuz sitzt ein Umschalter. Er zieht den Dialog von 680 auf bis zu 1180 Pixel und hebt die Höhe des Schreibfelds von 55 auf 68 Prozent der Fensterhöhe — für eine kurze Notiz ist das schmale Fenster richtig, für ein längeres Protokoll fehlte sonst der Platz.
+
+Die Wahl merkt sich der Browser und stellt sie beim nächsten Öffnen wieder her. Unter 900 Pixel Fensterbreite erscheint der Umschalter nicht; dort füllt der Dialog ohnehin den Bildschirm.
+
 ## Markdown direkt beim Schreiben
 
 Tagesjournal, Eintragstext, Tagesordnung, Beschlüsse und Projektbeschreibung verwenden einen lokalen Live-Editor:

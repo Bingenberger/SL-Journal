@@ -26,6 +26,7 @@ function openDialog(id, data={}) {
   form.querySelectorAll('.form-error').forEach(e=>e.hidden=true);
   if(id==='entry-dialog') {
     document.getElementById('entry-dialog-title').textContent=data.id?'Eintrag bearbeiten':'Neuer Eintrag';
+    breiteAnsicht(dialog,gemerkteBreite());
     updateMailFields(form);
     form.querySelector('[data-entry-attachments]').hidden=Boolean(data.type==='note' && data.drawings?.length);
     form.querySelector('[data-entry-attachments]').closest('details').hidden=Boolean(data.type==='note' && data.drawings?.length);
@@ -55,6 +56,28 @@ function openDialog(id, data={}) {
   const focus=(id==='document-dialog'?form.querySelector('input[type=url]'):null)||form.querySelector('input[name=title]')||form.querySelector('textarea[name=text]')||form.querySelector('input[name=name]')||form.querySelector('input:not([type=hidden])');
   if(focus) focus.focus();
 }
+// Breite Ansicht des Eintragsdialogs. Für eine kurze Notiz ist das schmale
+// Fenster richtig; für ein längeres Protokoll fehlt sonst der Platz. Die Wahl
+// gilt geräteweit und wird beim Öffnen wiederhergestellt.
+const BREITE_SPEICHER='journal-dialog-breit';
+function gemerkteBreite(){try{return localStorage.getItem(BREITE_SPEICHER)==='1';}catch{return false;}}
+function breiteAnsicht(dialog,breit){
+  dialog.classList.toggle('wide',breit);
+  const knopf=dialog.querySelector('[data-dialog-expand]');
+  if(!knopf) return;
+  knopf.setAttribute('aria-pressed',String(breit));
+  knopf.title=breit?'Schmale Ansicht':'Breite Ansicht';
+  knopf.querySelector('.sr-only').textContent=knopf.title;
+}
+document.addEventListener('click',event=>{
+  const knopf=event.target.closest('[data-dialog-expand]');
+  if(!knopf) return;
+  const dialog=knopf.closest('dialog');
+  const breit=!dialog.classList.contains('wide');
+  breiteAnsicht(dialog,breit);
+  try{localStorage.setItem(BREITE_SPEICHER,breit?'1':'0');}catch{}
+  window.JournalMarkdown?.refresh(dialog.querySelector('form'));
+});
 function updateMailFields(form){form.querySelectorAll('.protocol-fields').forEach(field=>field.hidden=form.elements.type.value!=='protocol');const box=form.querySelector('.mail-fields');if(box) box.hidden=!form.elements.type.value.startsWith('mail_');}
 document.addEventListener('click',async event=>{
   const button=event.target.closest('button,a');

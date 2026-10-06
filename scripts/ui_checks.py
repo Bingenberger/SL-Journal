@@ -150,7 +150,42 @@ def check_ui(page,app):
     page.goto(origin+'/')
     page.get_by_role('button',name='Seitenleiste ausklappen').click()
 
-    print('UI geprüft: 27 responsive Ansichten, 100 Kontakte, Speichern im Sichtbereich, Entwurfsschutz, mobile Prioritäten, Filter, direkte Tags, kompakte Zuordnungen und die ein-/ausklappbare Seitenleiste.')
+    # Breite Ansicht des Eintragsdialogs: mehr Platz für längere Texte.
+    page.set_viewport_size({'width':1600,'height':1000})
+    page.goto(origin+'/')
+    page.get_by_role('button',name='Neuer Eintrag').first.click()
+    eintrag=page.locator('#entry-dialog')
+    expect(eintrag).to_be_visible()
+    page.evaluate("""()=>{const t=document.querySelector('#entry-dialog [name=body]');
+      t.value=Array.from({length:60},(_,i)=>'Zeile '+(i+1)+' eines längeren Protokolls.').join('\\n');
+      t.dispatchEvent(new Event('input',{bubbles:true}));
+      window.JournalMarkdown?.refresh(document.querySelector('#entry-dialog form'));}""")
+    masse="""()=>{const d=document.querySelector('#entry-dialog');
+      return {breite:Math.round(d.getBoundingClientRect().width),
+              editor:Math.max(...[...d.querySelectorAll('.cm-scroller')]
+                .map(e=>Math.round(e.getBoundingClientRect().height)))};}"""
+    schmal=page.evaluate(masse)
+    eintrag.get_by_role('button',name='Breite Ansicht').click()
+    breit=page.evaluate(masse)
+    assert breit['breite']>schmal['breite']+300, f'Breite unverändert: {schmal} -> {breit}'
+    assert breit['editor']>schmal['editor'], f'Editor wächst nicht: {schmal} -> {breit}'
+    expect(eintrag.locator('[data-dialog-expand]')).to_have_attribute('aria-pressed','true')
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'kein Überlauf'
+    page.screenshot(path='docs/screenshots/eintrag-breite-ansicht.png')
+    # Die Wahl gilt geräteweit und steht beim nächsten Öffnen wieder.
+    # Der Entwurfsschutz fragt beim Abbrechen nach; hier wird verworfen.
+    verwerfen=lambda: page.once('dialog',lambda frage: frage.accept())
+    verwerfen();eintrag.get_by_role('button',name='Abbrechen').click()
+    expect(eintrag).not_to_be_visible()
+    page.get_by_role('button',name='Neuer Eintrag').first.click()
+    assert page.evaluate("()=>document.querySelector('#entry-dialog').classList.contains('wide')")
+    eintrag.get_by_role('button',name='Schmale Ansicht').click()
+    assert page.evaluate("()=>localStorage.getItem('journal-dialog-breit')")=='0'
+    verwerfen();eintrag.get_by_role('button',name='Abbrechen').click()
+    expect(eintrag).not_to_be_visible()
+    page.set_viewport_size({'width':1280,'height':960})
+
+    print('UI geprüft: 27 responsive Ansichten, 100 Kontakte, Speichern im Sichtbereich, Entwurfsschutz, mobile Prioritäten, Filter, direkte Tags, kompakte Zuordnungen, die ein-/ausklappbare Seitenleiste und die breite Dialogansicht.')
 
 
 if __name__=='__main__':

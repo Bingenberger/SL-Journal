@@ -574,3 +574,23 @@ body:has(.quick-upload) .page-footer{padding-bottom:130px}
 #upload-dialog [data-upload-mode] label{display:flex;align-items:center;gap:8px}
 #upload-dialog input[type=radio]{width:auto}
 @media(max-width:700px){.quick-upload{right:10px;bottom:10px;max-width:245px;padding:6px}.quick-upload .button{font-size:11px}}
+
+/* Breite Ansicht des Eintragsdialogs: mehr Platz für längere Texte.
+   Der Umschalter sitzt neben dem Schließen-Kreuz. */
+.dialog-tools{display:flex;align-items:center;gap:2px;flex:none}
+.icon-collapse{display:none}
+dialog.wide .icon-expand{display:none}
+dialog.wide .icon-collapse{display:inline-flex}
+dialog.wide{width:min(1180px,calc(100% - 40px));max-height:94dvh}
+/* Der strukturierte Dialog deckelt sein Formular selbst; ohne diese Zeile
+   bliebe die größere Dialoghöhe wirkungslos. */
+dialog.wide.structured-dialog>form{max-height:calc(94dvh - 2px)}
+dialog.wide .cm-scroller{max-height:68vh}
+dialog.wide textarea[data-markdown]{min-height:360px}
+@media(max-width:900px){
+  /* Unter dieser Breite bringt die Umschaltung nichts mehr. */
+  .dialog-tools [data-dialog-expand]{display:none}
+  dialog.wide{width:680px;max-height:90dvh}
+  dialog.wide .cm-scroller{max-height:55vh}
+  dialog.wide textarea[data-markdown]{min-height:0}
+}
